@@ -104,6 +104,10 @@
             box-shadow: 4px 4px 0px 0px #2563EB;
         }
 
+        /* Custom border fallback for Tailwind missing utilities */
+        .border-3 { border-width: 3px; }
+        .border-t-3 { border-top-width: 3px; }
+
         /* Distinct Team Theme Styling */
         .team-a-card {
             background-color: #DBEAFE;
@@ -153,6 +157,7 @@
         .animate-menu-in { animation: fadeInMenu 0.35s cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
 
         .intro-option.selected,
+        .intro-activity-option.selected,
         .intro-time-option.selected,
         .char-btn.selected,
         .team-a-char.selected,
@@ -235,6 +240,51 @@
         .custom-scroll::-webkit-scrollbar { width: 8px; }
         .custom-scroll::-webkit-scrollbar-track { background: #FEF08A; border-radius: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #0F172A; border-radius: 4px; }
+
+        /* Header: keep core gameplay controls directly reachable on every device. */
+        .app-header-inner { max-width: 1800px; justify-content: center; }
+        #game-controls, #game-tabs, #optional-controls { min-width: 0; }
+        #game-controls { order: 2; }
+        #optional-controls { order: 3; }
+        #game-tabs { order: 4; }
+        #mobile-more-btn { display: none; }
+
+        @media (max-width: 1279px) {
+            .app-header-inner { justify-content: center; }
+            #game-tabs { flex-basis: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 767px) {
+            .app-header-inner { gap: 0.5rem; }
+            #game-controls { justify-content: center; gap: 0.375rem; }
+            #game-tabs { width: 100%; }
+            #game-tabs > button { flex: 1 1 0; justify-content: center; }
+            #mobile-more-btn { display: inline-flex; order: 2; }
+            #optional-controls {
+                display: none;
+                position: absolute;
+                top: calc(100% + 0.4rem);
+                right: 0.75rem;
+                z-index: 90;
+                width: min(20rem, calc(100vw - 1.5rem));
+                padding: 0.75rem;
+                flex-direction: column;
+                align-items: stretch;
+                background: #0F172A;
+                border: 3px solid #475569;
+                border-radius: 0.9rem;
+                box-shadow: 5px 5px 0 0 #020617;
+            }
+            #optional-controls.is-open { display: flex; }
+            #optional-controls .timer-settings { justify-content: center; }
+            #optional-controls .timer-settings > div { justify-content: center; }
+        }
+
+        @media (max-width: 479px) {
+            .header-compact-label { display: none; }
+            #game-controls .time-box { padding-left: 0.4rem; padding-right: 0.4rem; }
+        }
+
     </style>
 </head>
 <body class="h-full flex flex-col justify-between selection:bg-yellow-300 selection:text-slate-900">
@@ -258,9 +308,27 @@
                 <span id="intro-step-dot-3" class="w-7 h-7 rounded-full bg-slate-300 text-slate-500 flex items-center justify-center text-xs font-black border-2 border-slate-300 shrink-0 transition-colors">3</span>
             </div>
 
-            <!-- STEP 1: Choose Mode -->
+            <!-- STEP 1: Choose Activity and Player Mode -->
             <div id="intro-step-1" class="w-full flex flex-col items-center gap-3 shrink-0">
-                <div class="text-xs font-black text-slate-500 uppercase tracking-widest">STEP 1 — SELECT GAME MODE</div>
+                <div class="text-xs font-black text-slate-500 uppercase tracking-widest">STEP 1 — CHOOSE AN ACTIVITY</div>
+
+                <div class="grid grid-cols-3 gap-2 w-full">
+                    <button id="intro-activity-hangman" onclick="selectIntroActivity('hangman')" class="intro-activity-option solid-btn bg-yellow-400 text-slate-900 p-2 sm:p-3 flex flex-col items-center gap-1 transition-all border-3 border-slate-900 rounded-xl selected">
+                        <span class="text-2xl sm:text-3xl">💀</span>
+                        <span class="text-[10px] sm:text-xs font-black uppercase">Hangman</span>
+                    </button>
+                    <button id="intro-activity-play" onclick="selectIntroActivity('play')" class="intro-activity-option solid-btn bg-white text-slate-900 p-2 sm:p-3 flex flex-col items-center gap-1 transition-all border-3 border-slate-900 rounded-xl">
+                        <span class="text-2xl sm:text-3xl">⌨️</span>
+                        <span class="text-[10px] sm:text-xs font-black uppercase">Quiz</span>
+                    </button>
+                    <button id="intro-activity-vocab" onclick="selectIntroActivity('vocab')" class="intro-activity-option solid-btn bg-white text-slate-900 p-2 sm:p-3 flex flex-col items-center gap-1 transition-all border-3 border-slate-900 rounded-xl">
+                        <span class="text-2xl sm:text-3xl">📚</span>
+                        <span class="text-[10px] sm:text-xs font-black uppercase">Study</span>
+                    </button>
+                </div>
+
+                <div id="intro-player-mode-section" class="w-full flex flex-col items-center gap-3">
+                    <div class="text-xs font-black text-slate-500 uppercase tracking-widest">SELECT PLAYER MODE</div>
 
                 <div class="grid grid-cols-2 gap-3 w-full">
                     <button id="intro-opt-solo" onclick="selectIntroMode('solo')" class="intro-option solid-btn bg-white text-slate-900 p-3 sm:p-4 flex flex-col items-center gap-1.5 transition-all border-4 border-slate-900 rounded-2xl selected">
@@ -274,8 +342,9 @@
                         <span class="text-[10px] font-bold text-slate-500">Blue Team vs Red Team head-to-head competitive puzzle challenge.</span>
                     </button>
                 </div>
+                </div>
 
-                <button onclick="goIntroStep(2)" id="intro-next-btn-1" class="solid-btn w-full bg-yellow-400 text-slate-900 py-3 font-black text-sm sm:text-base uppercase tracking-wide">
+                <button onclick="proceedFromIntroStep1()" id="intro-next-btn-1" class="solid-btn w-full bg-yellow-400 text-slate-900 py-3 font-black text-sm sm:text-base uppercase tracking-wide">
                     PROCEED TO DIFFICULTY →
                 </button>
             </div>
@@ -421,7 +490,7 @@
 
     <!-- Header & Action Toolbar -->
     <header class="w-full bg-slate-900 text-white px-3 sm:px-4 py-2 border-b-4 border-slate-900 z-[70] shadow-md shrink-0 relative">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+        <div class="app-header-inner mx-auto flex flex-wrap items-center gap-2">
             
             <div class="flex items-center gap-2">
                 <span class="bg-yellow-400 text-slate-900 text-xl sm:text-2xl px-2 py-0.5 font-black rounded-xl border-2 border-white shadow-sm">🧩</span>
@@ -430,14 +499,49 @@
                 </div>
             </div>
 
-            <div id="header-drawer" class="fixed inset-y-0 right-0 z-[60] w-[86vw] max-w-xs bg-slate-900 border-l-4 border-slate-700 shadow-2xl p-4 flex flex-col gap-3 overflow-y-auto translate-x-full transition-transform duration-300 ease-out xl:contents">
+            <div id="game-controls" class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <button onclick="requestHomeNavigation()" class="solid-btn bg-red-600 hover:bg-red-700 text-white px-2.5 sm:px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Return to Main Menu">
+                    🏠 <span class="header-compact-label">Home</span>
+                </button>
 
-                <div class="flex items-center justify-between xl:hidden shrink-0">
-                    <span class="text-yellow-400 font-black font-display text-sm uppercase tracking-wide">Game Menu</span>
-                    <button onclick="toggleMobileMenu(false)" class="solid-btn bg-slate-700 text-white px-2.5 py-1 text-xs" title="Close Menu">✕</button>
+                <button id="mode-toggle-btn" onclick="requestPlayerModeToggle()" class="solid-btn bg-yellow-400 text-slate-900 px-2.5 sm:px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Toggle Single Player / Multiplayer">
+                    <span id="mode-toggle-icon">🧘‍♂️</span> <span id="mode-toggle-label" class="header-compact-label">Single Player</span>
+                </button>
+
+                <div class="time-box flex items-center gap-1 bg-slate-800 text-yellow-300 px-2 sm:px-3 py-1 rounded-xl border-2 border-slate-700 text-xs font-mono font-black" title="Match Time Remaining">
+                    <span class="text-sm">🏁</span>
+                    <span id="global-timer-display" class="text-sm sm:text-base font-bold min-w-[3.5ch]">00:00</span>
                 </div>
 
-                <div class="flex items-center gap-1 flex-wrap bg-slate-800 p-1 rounded-xl border-2 border-slate-700">
+                <div class="time-box flex items-center gap-1 bg-slate-800 text-yellow-400 px-2 sm:px-3 py-1 rounded-xl border-2 border-slate-700 text-xs font-mono font-black" title="Question Time Remaining">
+                    <span class="text-sm">⏱️</span>
+                    <span id="timer-display" class="text-sm sm:text-base font-bold min-w-[3.5ch] text-yellow-300">00:30</span>
+                </div>
+            </div>
+
+            <button id="mobile-more-btn" onclick="toggleMobileOptions()" class="solid-btn bg-slate-700 text-white px-3 py-1.5 text-base font-black" title="More game controls" aria-controls="optional-controls" aria-expanded="false">•••</button>
+
+            <div id="optional-controls" class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <!-- Question Turn Timer Options with Confirmation Prompt -->
+                <div class="timer-settings flex items-center gap-1 bg-slate-800 text-yellow-400 px-2 sm:px-3 py-1 rounded-xl border-2 border-slate-700 text-xs font-mono font-black flex-wrap">
+                    <span class="text-sm">⏱️</span>
+                    <span class="text-[10px] font-sans font-black uppercase text-slate-200">Set time</span>
+                    <div class="flex gap-1 ml-1 flex-wrap">
+                        <button id="time-opt-15" onclick="requestTimerDurationChange(15)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="15s Hard">15s</button>
+                        <button id="time-opt-30" onclick="requestTimerDurationChange(30)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="30s Normal">30s</button>
+                        <button id="time-opt-45" onclick="requestTimerDurationChange(45)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="45s Easy">45s</button>
+                        <button id="time-opt-60" onclick="requestTimerDurationChange(60)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="60s One Brain Cell">1m</button>
+                    </div>
+                </div>
+
+                <button id="reset-team-match-btn" onclick="resetTeamMatch()" class="hidden solid-btn bg-slate-100 hover:bg-slate-200 text-slate-800 w-9 h-9 p-0 text-lg font-black items-center justify-center" title="Reset both team scores" aria-label="Reset both team scores">↺</button>
+                <button onclick="reshuffleAllPuzzles()" class="solid-btn bg-emerald-400 text-slate-900 px-2 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Shuffle Questions">
+                    🔀 <span>Shuffle</span>
+                </button>
+                <button id="sound-toggle" onclick="toggleSound()" class="solid-btn bg-blue-600 text-white px-2.5 py-1.5 text-sm" title="Toggle Sound Effect">🔊</button>
+            </div>
+
+            <div id="game-tabs" class="flex items-center gap-1 flex-wrap bg-slate-800 p-1 rounded-xl border-2 border-slate-700">
                     <button id="tab-hangman" onclick="requestTabSwitch('hangman')" class="solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1">
                         🎮 <span>Hangman</span>
                     </button>
@@ -447,49 +551,9 @@
                     <button id="tab-vocab" onclick="requestTabSwitch('vocab')" class="solid-btn bg-slate-100 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1">
                         📚 <span>Vocabulary</span>
                     </button>
-                </div>
-
-                <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                    <button onclick="requestHomeNavigation()" class="solid-btn bg-red-600 hover:bg-red-700 text-white px-2.5 sm:px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Return to Main Menu">
-                        🏠 <span class="hidden md:inline">Home</span>
-                    </button>
-
-                    <button id="mode-toggle-btn" onclick="requestPlayerModeToggle()" class="solid-btn bg-yellow-400 text-slate-900 px-2.5 sm:px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Toggle Single Player / Multiplayer">
-                        <span id="mode-toggle-icon">🧘‍♂️</span> <span id="mode-toggle-label">Single Player</span>
-                    </button>
-
-                    <div class="flex items-center gap-1 bg-slate-800 text-yellow-300 px-2 sm:px-3 py-1 rounded-xl border-2 border-slate-700 text-xs font-mono font-black" title="Match Time Remaining">
-                        <span class="text-sm">🏁</span>
-                        <span id="global-timer-display" class="text-sm sm:text-base font-bold min-w-[3.5ch]">00:00</span>
-                    </div>
-
-                    <!-- Question Turn Timer Options with Confirmation Prompt -->
-                    <div class="flex items-center gap-1 bg-slate-800 text-yellow-400 px-2 sm:px-3 py-1 rounded-xl border-2 border-slate-700 text-xs font-mono font-black flex-wrap">
-                        <span class="text-sm">⏱️</span>
-                        <span id="timer-display" class="text-sm sm:text-base font-bold min-w-[3.5ch] text-yellow-300">00:30</span>
-                        
-                        <div class="flex gap-1 ml-1 flex-wrap">
-                            <button id="time-opt-15" onclick="requestTimerDurationChange(15)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="15s Hard">15s</button>
-                            <button id="time-opt-30" onclick="requestTimerDurationChange(30)" class="solid-btn bg-yellow-400 text-slate-900 px-1.5 py-0.5 text-[10px]" title="30s Normal">30s</button>
-                            <button id="time-opt-45" onclick="requestTimerDurationChange(45)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="45s Easy">45s</button>
-                            <button id="time-opt-60" onclick="requestTimerDurationChange(60)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="60s One Brain Cell">1m</button>
-                            <button onclick="restartCurrentQuestionTimer()" class="solid-btn bg-slate-200 text-slate-900 px-1.5 py-0.5 text-[10px]" title="Restart Timer">↺</button>
-                        </div>
-                    </div>
-
-                    <button onclick="reshuffleAllPuzzles()" class="solid-btn bg-emerald-400 text-slate-900 px-2 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Shuffle Questions">
-                        🔀 <span class="hidden md:inline">Shuffle</span>
-                    </button>
-                    <button id="sound-toggle" onclick="toggleSound()" class="solid-btn bg-blue-600 text-white px-2.5 py-1.5 text-sm" title="Toggle Sound Effect">🔊</button>
-                </div>
             </div>
-
-            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="xl:hidden solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-base font-black" title="Open Menu">☰</button>
-
         </div>
     </header>
-
-    <div id="mobile-menu-backdrop" onclick="toggleMobileMenu(false)" class="hidden xl:hidden fixed inset-0 bg-slate-900/60 z-[55]"></div>
 
     <!-- Multiplayer Scoreboard Bar -->
     <div id="multiplayer-bar" class="hidden bg-slate-900 border-b-4 border-slate-900 py-2 px-2 sm:px-4 shadow-inner shrink-0 transition-all">
@@ -506,8 +570,7 @@
             </div>
 
             <div class="flex items-center gap-1">
-                <span class="text-[10px] sm:text-xs uppercase font-black tracking-wider text-yellow-300 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700 hidden md:inline-block">⚡ +1 Pt per Correct • 5 Streak Bonus</span>
-                <button onclick="resetTeamMatch()" class="solid-btn bg-slate-100 hover:bg-slate-200 text-slate-800 px-2 py-1 text-xs font-black flex items-center gap-1">↺ <span class="hidden sm:inline">Reset Scores</span></button>
+                <span class="text-[10px] sm:text-xs uppercase font-black tracking-wider text-yellow-300 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700 hidden md:inline-flex flex-col leading-tight">⚡ +1 PT PER CORRECT <span>🔥5 STREAK BONUS</span></span>
             </div>
 
             <!-- RED TEAM B -->
@@ -701,13 +764,13 @@
     <div id="switch-confirm-modal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/80 p-4">
         <div class="solid-card bg-white p-6 max-w-md w-full text-center animate-pop border-4 border-slate-900">
             <div class="text-4xl mb-2">⚠️</div>
-            <h3 class="text-xl font-black font-display text-slate-900 mb-2 uppercase">แจ้งเตือนเริ่มนับคะแนนใหม่</h3>
+            <h3 class="text-xl font-black font-display text-slate-900 mb-2 uppercase">SCORE RESET WARNING</h3>
             <p id="switch-confirm-msg" class="text-xs sm:text-sm font-bold text-slate-700 mb-5 bg-yellow-100 p-3 rounded-xl border-2 border-slate-900">
-                หากกดเปลี่ยนโหมดการเล่น เปลี่ยนเวลา หรือสลับประเภทผู้เล่น จะต้องเริ่มนับคะแนนใหม่หมดนะ! คุณแน่ใจหรือไม่?
+                Changing the game mode, time limit, or player type will reset all scores! Are you sure you want to proceed?
             </p>
             <div class="flex gap-3">
-                <button onclick="cancelPendingSwitch()" class="solid-btn bg-slate-200 text-slate-900 py-2.5 flex-1 font-black text-xs sm:text-sm uppercase">ยกเลิก (Cancel)</button>
-                <button onclick="confirmPendingSwitch()" class="solid-btn bg-red-600 text-white py-2.5 flex-1 font-black text-xs sm:text-sm uppercase">ตกลงและเริ่มใหม่</button>
+                <button onclick="cancelPendingSwitch()" class="solid-btn bg-slate-200 text-slate-900 py-2.5 flex-1 font-black text-xs sm:text-sm uppercase">CANCEL</button>
+                <button onclick="confirmPendingSwitch()" class="solid-btn bg-red-600 text-white py-2.5 flex-1 font-black text-xs sm:text-sm uppercase">CONFIRM & RESTART</button>
             </div>
         </div>
     </div>
@@ -716,13 +779,13 @@
     <div id="reveal-confirm-modal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/80 p-4">
         <div class="solid-card bg-white p-6 max-w-md w-full text-center animate-pop border-4 border-slate-900">
             <div class="text-4xl mb-2">👁️</div>
-            <h3 class="text-xl font-black font-display text-slate-900 mb-2 uppercase">ยืนยันเปิดคำตอบ?</h3>
+            <h3 class="text-xl font-black font-display text-slate-900 mb-2 uppercase">REVEAL ANSWER?</h3>
             <p class="text-xs sm:text-sm font-bold text-slate-700 mb-5 bg-amber-100 p-3 rounded-xl border-2 border-slate-900">
-                คุณแน่ใจหรือไม่ว่าจะเปิดคำตอบจริงๆ? เมื่อเปิดแล้วจะไม่สามารถพิมพ์คำตอบเพื่อสะสมคะแนนในข้อนี้ได้อีก
+                Are you sure you want to reveal the answer? You won't be able to earn points for this question once revealed.
             </p>
             <div class="flex gap-3">
-                <button onclick="cancelRevealAnswer()" class="solid-btn bg-slate-200 text-slate-900 py-2.5 flex-1 font-black text-xs sm:text-sm uppercase">ยกเลิก (Cancel)</button>
-                <button onclick="confirmRevealAnswer()" class="solid-btn bg-amber-400 text-slate-900 py-2.5 flex-1 font-black text-xs sm:text-sm uppercase">เปิดคำตอบเลย</button>
+                <button onclick="cancelRevealAnswer()" class="solid-btn bg-slate-200 text-slate-900 py-2.5 flex-1 font-black text-xs sm:text-sm uppercase">CANCEL</button>
+                <button onclick="confirmRevealAnswer()" class="solid-btn bg-amber-400 text-slate-900 py-2.5 flex-1 font-black text-xs sm:text-sm uppercase">REVEAL NOW</button>
             </div>
         </div>
     </div>
@@ -751,6 +814,14 @@
                         <div class="text-[10px] text-red-100 font-bold">Reduce opponent's time limit to next lower speed!</div>
                     </div>
                 </button>
+
+                <button onclick="applyStreakReward('nextQuestionBonus')" class="solid-btn bg-emerald-500 hover:bg-emerald-600 text-slate-900 py-3 px-3 text-xs sm:text-sm font-black uppercase text-left flex items-center gap-2.5">
+                    <span class="text-2xl">🎯</span>
+                    <div>
+                        <div class="font-extrabold">NEXT QUESTION CHALLENGE</div>
+                        <div class="text-[10px] text-emerald-950 font-bold">Keep this turn: solve the next puzzle for +1 bonus point. Fail, skip, reveal, or run out of time and the opponent gets +1.</div>
+                    </div>
+                </button>
             </div>
         </div>
     </div>
@@ -768,29 +839,28 @@
     </div>
 
     <script>
-        // Verified 200 Unique Rebus Puzzle Dataset with Distinct Emoji Pairs
         const compoundList = [
-            ['🔑', '📋', 'KEYBOARD', 'Technology', 'Input device for typing letters and numbers'],
+            ['⌨️', '📋', 'KEYBOARD', 'Technology', 'Input device for typing letters and numbers'],
             ['☀️', '🌻', 'SUNFLOWER', 'Nature', 'Bright yellow flower facing the sun'],
-            ['🧈', '🦋', 'BUTTERFLY', 'Animals', 'Insect with colorful wings'],
+            ['🧈', '🪰', 'BUTTERFLY', 'Animals', 'Insect with colorful wings'],
             ['🌧️', '🏹', 'RAINBOW', 'Nature', 'Colorful arc in the sky after rain'],
             ['⭐', '🐟', 'STARFISH', 'Marine', 'Sea creature shaped like a star'],
             ['🔥', '🪰', 'FIREFLY', 'Insects', 'Night insect that glows in the dark'],
             ['🍳', '🎂', 'PANCAKE', 'Food', 'Flat round breakfast cake'],
-            ['☃️', '👨', 'SNOWMAN', 'Winter', 'Figure built from snow'],
+            ['❄️', '👨', 'SNOWMAN', 'Winter', 'Figure built from snow'],
             ['🦶', '⚽', 'FOOTBALL', 'Sports', 'Popular sport played with a round ball'],
-            ['🌶️', '🐕', 'HOTDOG', 'Food', 'Sausage served in a sliced bun'],
+            ['🔥', '🐕', 'HOTDOG', 'Food', 'Sausage served in a sliced bun'],
             ['💧', '🍈', 'WATERMELON', 'Fruit', 'Large juicy red fruit with seeds'],
             ['🍾', '🌽', 'POPCORN', 'Snacks', 'Popular movie theater snack'],
             ['🍯', '🐝', 'HONEYBEE', 'Insects', 'Insect that produces honey'],
             ['🌙', '💡', 'NIGHTLIGHT', 'Home', 'Small light used in bedrooms at night'],
             ['🏠', '💼', 'HOMEWORK', 'Education', 'School assignments done at home'],
-            ['🦷', '🪥', 'TOOTHBRUSH', 'Hygiene', 'Tool used to clean teeth'],
+            ['🦷', '🖌️', 'TOOTHBRUSH', 'Hygiene', 'Tool used to clean teeth'],
             ['🌊', '🐚', 'SEASHELL', 'Ocean', 'Hard shell found on beaches'],
-            ['🏔️', '🛣️', 'HIGHWAY', 'Transport', 'Main public road for fast traffic'],
-            ['🐉', '🦟', 'DRAGONFLY', 'Insects', 'Insect with long body and large wings'],
-            ['🥤', '🍓', 'STRAWBERRY', 'Fruit', 'Red sweet fruit with seeds outside'],
-            ['🌦️', '🧥', 'RAINCOAT', 'Clothing', 'Waterproof coat worn in rain'],
+            ['⬆️', '🛣️', 'HIGHWAY', 'Transport', 'Main public road for fast traffic'],
+            ['🐉', '🪰', 'DRAGONFLY', 'Insects', 'Insect with long body and large wings'],
+            ['🥤', '🫐', 'STRAWBERRY', 'Fruit', 'Red sweet fruit with seeds outside'],
+            ['🌧️', '🧥', 'RAINCOAT', 'Clothing', 'Waterproof coat worn in rain'],
             ['🏕️', '🔥', 'CAMPFIRE', 'Outdoor', 'Outdoor fire at a campsite'],
             ['👂', '💍', 'EARRING', 'Fashion', 'Jewelry worn on the ear'],
             ['💡', '🏠', 'LIGHTHOUSE', 'Coastal', 'Tower with a light to guide ships'],
@@ -800,11 +870,11 @@
             ['💔', '🏃', 'BREAKFAST', 'Food', 'First meal of the day'],
             ['🛏️', '🚪', 'BEDROOM', 'Home', 'Room used for sleeping'],
             ['🧠', '📱', 'SMARTPHONE', 'Technology', 'Mobile phone with advanced features'],
-            ['☀️', '🌟', 'SUNSHINE', 'Weather', 'Light and heat from the sun'],
+            ['☀️', '✨', 'SUNSHINE', 'Weather', 'Light and heat from the sun'],
             ['💨', '✈️', 'AIRPLANE', 'Travel', 'Flying vehicle with wings'],
             ['👂', '📞', 'EARPHONE', 'Technology', 'Audio device worn in ears'],
             ['📚', '🧳', 'BOOKCASE', 'Furniture', 'Cabinet with shelves for storing books'],
-            ['👩', '🐞', 'LADYBUG', 'Insects', 'Small red beetle with black spots'],
+            ['👩', '🐛', 'LADYBUG', 'Insects', 'Small red beetle with black spots'],
             ['❌', '🔤', 'CROSSWORD', 'Games', 'Word puzzle in an intersecting grid'],
             ['🎮', '🏞️', 'PLAYGROUND', 'Outdoor', 'Outdoor area for children to play'],
             ['🦶', '🖨️', 'FOOTPRINT', 'Tracks', 'Mark left by a foot on a surface'],
@@ -820,16 +890,16 @@
             ['🚢', '💥', 'SHIPWRECK', 'Ocean', 'Remains of a destroyed ship'],
             ['👄', '🪄', 'LIPSTICK', 'Cosmetics', 'Cosmetic applied to color the lips'],
             ['💇', '✂️', 'HAIRCUT', 'Hygiene', 'Act of cutting or trimming hair'],
-            ['👁️', '👓', 'EYEGLASSES', 'Vision', 'Lenses worn to improve eyesight'],
+            ['👁️', '🥃', 'EYEGLASSES', 'Vision', 'Lenses worn to improve eyesight'],
             ['🧊', '⛰️', 'ICEBERG', 'Nature', 'Large mass of ice floating in the sea'],
             ['🦶', '🪜', 'FOOTSTEP', 'Movement', 'Sound or mark of a step'],
             ['🌊', '🐎', 'SEAHORSE', 'Marine', 'Small marine fish with horse-like head'],
-            ['🤚', '🤝', 'HANDSHAKE', 'Greeting', 'Grasping hands when meeting someone'],
+            ['🤚', '🫨', 'HANDSHAKE', 'Greeting', 'Grasping hands when meeting someone'],
             ['🏹', '👔', 'BOWTIE', 'Fashion', 'Necktie shaped like a bow'],
             ['📰', '✉️', 'NEWSLETTER', 'Media', 'Written report distributed regularly'],
             ['🔑', '🕳️', 'KEYHOLE', 'Home', 'Hole for inserting a key in a lock'],
-            ['🌙', '🔦', 'MOONLIGHT', 'Nature', 'Soft glow coming from the moon'],
-            ['⚡', '🌪️', 'THUNDERSTORM', 'Weather', 'Storm with thunder and lightning'],
+            ['🌙', '💡', 'MOONLIGHT', 'Nature', 'Soft glow coming from the moon'],
+            ['⚡', '⛈️', 'THUNDERSTORM', 'Weather', 'Storm with thunder and lightning'],
             ['🌍', '🫨', 'EARTHQUAKE', 'Nature', 'Shaking of the Earth\'s surface'],
             ['❤️', '🥁', 'HEARTBEAT', 'Health', 'Pulsation or rhythm of the heart'],
             ['🛟', '💂', 'LIFEGUARD', 'Safety', 'Person trained to rescue swimmers'],
@@ -838,137 +908,137 @@
             ['🕯️', '🪄', 'CANDLESTICK', 'Home', 'Holder used for securing a candle'],
             ['🔥', '👨', 'FIREMAN', 'Jobs', 'Person who extinguishes fires'],
             ['❄️', '⚽', 'SNOWBALL', 'Winter', 'Ball made of packed snow'],
-            ['🌤️', '🧹', 'SKYSCRAPER', 'Architecture', 'Very tall multi-story building'],
-            ['📚', '🔖', 'BOOKMARK', 'Reading', 'Marker placed to keep one\'s place in a book'],
+            ['🌤️', '🪒', 'SKYSCRAPER', 'Architecture', 'Very tall multi-story building'],
+            ['📚', '❌', 'BOOKMARK', 'Reading', 'Marker placed to keep one\'s place in a book'],
             ['🌧️', '👢', 'RAINBOOTS', 'Clothing', 'Waterproof boots for wet weather'],
-            ['🧠', '🌪️', 'BRAINSTORM', 'Thinking', 'Group problem-solving session'],
-            ['⏱️', '📏', 'TIMELINE', 'History', 'Display of events in chronological order'],
-            ['🦶', '👟', 'FOOTWEAR', 'Fashion', 'Items worn on feet such as shoes'],
+            ['🧠', '⛈️', 'BRAINSTORM', 'Thinking', 'Group problem-solving session'],
+            ['⏱️', '〰️', 'TIMELINE', 'History', 'Display of events in chronological order'],
+            ['🦶', '👗', 'FOOTWEAR', 'Fashion', 'Items worn on feet such as shoes'],
             ['💧', '🍂', 'WATERFALL', 'Nature', 'Cascade of water falling from a height'],
             ['🎟️', '📚', 'PASSBOOK', 'Finance', 'Bank record book for transactions'],
             ['⬆️', '🧥', 'OVERCOAT', 'Clothing', 'Heavy coat worn over outer clothes'],
             ['⬇️', '🏞️', 'UNDERGROUND', 'Location', 'Below the surface of the earth'],
-            ['🔙', '🎒', 'BACKPACK', 'Bag', 'Bag carried on one\'s back'],
+            ['🔙', '📦', 'BACKPACK', 'Bag', 'Bag carried on one\'s back'],
             ['🏙️', '🏠', 'TOWNHOUSE', 'Real Estate', 'Tall narrow house in a terrace'],
             ['🛣️', '💡', 'STREETLIGHT', 'City', 'Light on a pole along a street'],
             ['❌', '🛣️', 'CROSSROAD', 'Travel', 'Intersection of two or more roads'],
-            ['🌊', '🛏️', 'RIVERBED', 'Nature', 'Channel in which a river flows'],
-            ['☀️', '🌇', 'SUNSET', 'Nature', 'Daily disappearance of the sun'],
-            ['☀️', '🌅', 'SUNRISE', 'Nature', 'Daily appearance of the sun'],
+            ['🏞️', '🛏️', 'RIVERBED', 'Nature', 'Channel in which a river flows'],
+            ['☀️', '⬇️', 'SUNSET', 'Nature', 'Daily disappearance of the sun'],
+            ['☀️', '⬆️', 'SUNRISE', 'Nature', 'Daily appearance of the sun'],
             ['💨', '✉️', 'AIRMAIL', 'Postal', 'Transporting mail by aircraft'],
             ['📚', '🏪', 'BOOKSTORE', 'Shopping', 'Shop where books are sold'],
             ['🚗', '🛣️', 'DRIVEWAY', 'Home', 'Private road leading to a house'],
-            ['🤚', '👜', 'HANDBAG', 'Fashion', 'Small bag for carrying personal items'],
-            ['🙆', '📞', 'HEADPHONE', 'Audio', 'Pair of small speakers worn on head'],
+            ['🤚', '🛍️', 'HANDBAG', 'Fashion', 'Small bag for carrying personal items'],
+            ['👤', '📞', 'HEADPHONE', 'Audio', 'Pair of small speakers worn on head'],
             ['🤝', '📦', 'MATCHBOX', 'Home', 'Box designed for holding matches'],
             ['🔑', '🎵', 'KEYNOTE', 'Music', 'Central theme or principal tone'],
-            ['☀️', '🕶️', 'SUNGLASSES', 'Fashion', 'Eyewear protecting eyes from sunlight'],
-            ['🌧️', '🌪️', 'RAINSTORM', 'Weather', 'Heavy rainfall with strong winds'],
+            ['☀️', '🥃', 'SUNGLASSES', 'Fashion', 'Eyewear protecting eyes from sunlight'],
+            ['🌧️', '⛈️', 'RAINSTORM', 'Weather', 'Heavy rainfall with strong winds'],
             ['🐴', '👞', 'HORSESHOE', 'Animals', 'U-shaped shoe fitted for horses'],
             ['🧈', '🥛', 'BUTTERMILK', 'Dairy', 'Fermented dairy liquid'],
             ['🧼', '🫧', 'SOAPBUBBLE', 'Fun', 'Thin sphere of soapy water'],
-            ['🪵', '🪓', 'WOODCUTTER', 'Jobs', 'Person whose job is felling trees'],
+            ['🪵', '✂️', 'WOODCUTTER', 'Jobs', 'Person whose job is felling trees'],
             ['☕', '🎂', 'CUPCAKE', 'Food', 'Small cake baked in a cup-shaped foil'],
-            ['☕', '🏺', 'TEAPOT', 'Kitchen', 'Container with a spout used for brewing tea'],
-            ['⚾', '⚽', 'BASEBALL', 'Sports', 'Game played with a bat, ball, and bases'],
+            ['🍵', '🍯', 'TEAPOT', 'Kitchen', 'Container with a spout used for brewing tea'],
+            ['⛺', '⚽', 'BASEBALL', 'Sports', 'Game played with a bat, ball, and bases'],
             ['🧺', '⚽', 'BASKETBALL', 'Sports', 'Game where players shoot ball through a hoop'],
             ['🍬', '❤️', 'SWEETHEART', 'Love', 'Beloved person or term of endearment'],
-            ['🔥', '🧱', 'FIREPLACE', 'Home', 'Structure designed to contain a fire indoors'],
-            ['🔵', '🍓', 'BLUEBERRY', 'Fruit', 'Small sweet blue edible berry'],
-            ['⬛', '🍓', 'BLACKBERRY', 'Fruit', 'Dark edible fruit composed of drupelets'],
-            ['✍️', '📝', 'HANDWRITING', 'Education', 'Writing done by hand with a pen or pencil'],
-            ['☀️', '💡', 'DAYLIGHT', 'Nature', 'Natural light during the day'],
+            ['🔥', '📍', 'FIREPLACE', 'Home', 'Structure designed to contain a fire indoors'],
+            ['🔵', '🍒', 'BLUEBERRY', 'Fruit', 'Small sweet blue edible berry'],
+            ['⬛', '🍒', 'BLACKBERRY', 'Fruit', 'Dark edible fruit composed of drupelets'],
+            ['🤚', '✍️', 'HANDWRITING', 'Education', 'Writing done by hand with a pen or pencil'],
+            ['📅', '💡', 'DAYLIGHT', 'Nature', 'Natural light during the day'],
             ['💧', '🛡️', 'WATERPROOF', 'Material', 'Resistant to water penetration'],
             ['🔥', '🚛', 'FIRETRUCK', 'Vehicle', 'Vehicle equipped for fighting fires'],
-            ['👮', '👨', 'POLICEMAN', 'Jobs', 'Male officer who enforces laws'],
+            ['🚓', '👨', 'POLICEMAN', 'Jobs', 'Male officer who enforces laws'],
             ['✉️', '📦', 'MAILBOX', 'Postal', 'Box for receiving delivered mail'],
-            ['📬', '🃏', 'POSTCARD', 'Postal', 'Card for sending a message without an envelope'],
-            ['✈️', '⚓', 'AIRPORT', 'Travel', 'Facility where aircraft land and take off'],
-            ['🌊', '🍱', 'SEAFOOD', 'Food', 'Edible marine fish and shellfish'],
+            ['📮', '🃏', 'POSTCARD', 'Postal', 'Card for sending a message without an envelope'],
+            ['💨', '⚓', 'AIRPORT', 'Travel', 'Facility where aircraft land and take off'],
+            ['🌊', '🍔', 'SEAFOOD', 'Food', 'Edible marine fish and shellfish'],
             ['🌊', '🏖️', 'SEASHORE', 'Nature', 'Land along the edge of a sea or ocean'],
-            ['🛏️', '👈', 'BEDSIDE', 'Home', 'Space directly next to a bed'],
+            ['🛏️', '📐', 'BEDSIDE', 'Home', 'Space directly next to a bed'],
             ['🔙', '🦴', 'BACKBONE', 'Anatomy', 'Spine or main structural support'],
             ['🦷', '🧴', 'TOOTHPASTE', 'Hygiene', 'Paste used with a brush to clean teeth'],
             ['👁️', '〰️', 'EYEBROW', 'Anatomy', 'Strip of hair above the eye'],
-            ['👁️', '🖌️', 'EYELASH', 'Anatomy', 'Hairs growing at the edge of the eyelid'],
-            ['❄️', '🌪️', 'SNOWSTORM', 'Weather', 'Heavy fall of snow with strong winds'],
-            ['🧹', '🗑️', 'DUSTBIN', 'Home', 'Container for household garbage'],
-            ['💨', '🏭', 'WINDMILL', 'Energy', 'Mill converted into power by wind'],
+            ['👁️', '🪢', 'EYELASH', 'Anatomy', 'Hairs growing at the edge of the eyelid'],
+            ['❄️', '⛈️', 'SNOWSTORM', 'Weather', 'Heavy fall of snow with strong winds'],
+            ['💨', '🗑️', 'DUSTBIN', 'Home', 'Container for household garbage'],
+            ['🌬️', '🏭', 'WINDMILL', 'Energy', 'Mill converted into power by wind'],
             ['💧', '🌺', 'WATERLILY', 'Nature', 'Aquatic plant with floating leaves and flowers'],
             ['🧱', '📄', 'WALLPAPER', 'Home', 'Decorative paper for covering interior walls'],
             ['📰', '📄', 'NEWSPAPER', 'Media', 'Printed publication containing daily news'],
-            ['📝', '📚', 'NOTEBOOK', 'Stationery', 'Book of blank pages for writing notes'],
+            ['🎵', '📚', 'NOTEBOOK', 'Stationery', 'Book of blank pages for writing notes'],
             ['💬', '📚', 'TEXTBOOK', 'Education', 'Standard book used for studying a subject'],
-            ['🎶', '📋', 'PLAYLIST', 'Music', 'List of recorded audio tracks to play'],
-            ['🛠️', '📚', 'WORKBOOK', 'Education', 'Book containing exercises for students'],
-            ['🎧', '📚', 'AUDIOBOOK', 'Media', 'Recording of a book being read aloud'],
+            ['🎮', '📋', 'PLAYLIST', 'Music', 'List of recorded audio tracks to play'],
+            ['💼', '📚', 'WORKBOOK', 'Education', 'Book containing exercises for students'],
+            ['🔊', '📚', 'AUDIOBOOK', 'Media', 'Recording of a book being read aloud'],
             ['🎮', '🏪', 'PLAYSTORE', 'Technology', 'Digital marketplace for downloading apps'],
-            ['🛠️', '🏬', 'WORKSHOP', 'Work', 'Room or building where things are made'],
+            ['💼', '🛒', 'WORKSHOP', 'Work', 'Room or building where things are made'],
             ['🐄', '👦', 'COWBOY', 'Culture', 'Mounted cattle-herder of the American West'],
-            ['🐴', '⚡', 'HORSEPOWER', 'Science', 'Unit for measuring the power of engines'],
-            ['☀️', '🕯️', 'SUNLIGHT', 'Nature', 'Light coming directly from the sun'],
+            ['🐴', '💪', 'HORSEPOWER', 'Science', 'Unit for measuring the power of engines'],
+            ['☀️', '💡', 'SUNLIGHT', 'Nature', 'Light coming directly from the sun'],
             ['🌙', '🚶', 'MOONWALK', 'Dance', 'Famous dance move popularized by Michael Jackson'],
             ['⭐', '💡', 'STARLIGHT', 'Space', 'Light coming from distant stars'],
-            ['🌙', '🏛️', 'NIGHTCLUB', 'Entertainment', 'Venue open late at night for music and dancing'],
-            ['☀️', '💔', 'DAYBREAK', 'Nature', 'First appearance of light in the morning'],
-            ['📅', '🏁', 'WEEKEND', 'Calendar', 'Saturday and Sunday regarded as rest days'],
-            ['⚾', '📋', 'BASEBOARD', 'Home', 'Board along the bottom of an interior wall'],
-            ['🔑', '🔢', 'KEYPAD', 'Technology', 'Set of buttons with numbers used on phones/locks'],
-            ['🚪', '🧘', 'DOORMAT', 'Home', 'Mat placed outside a door for wiping shoes'],
-            ['🌧️', '👕', 'RAINWEAR', 'Clothing', 'Waterproof clothing worn in the rain'],
-            ['🦶', '😴', 'FOOTREST', 'Furniture', 'Support for resting one\'s feet while seated'],
-            ['🤚', '🤸', 'HANDSTAND', 'Gymnastics', 'Balancing upside down on one\'s hands'],
-            ['💇', '🧷', 'HAIRPIN', 'Fashion', 'Pin used for fastening the hair in place'],
+            ['🌙', '♣️', 'NIGHTCLUB', 'Entertainment', 'Venue open late at night for music and dancing'],
+            ['📅', '💔', 'DAYBREAK', 'Nature', 'First appearance of light in the morning'],
+            ['🗓️', '🔚', 'WEEKEND', 'Calendar', 'Saturday and Sunday regarded as rest days'],
+            ['⛺', '📋', 'BASEBOARD', 'Home', 'Board along the bottom of an interior wall'],
+            ['🔑', '📝', 'KEYPAD', 'Technology', 'Set of buttons with numbers used on phones/locks'],
+            ['🚪', '🔲', 'DOORMAT', 'Home', 'Mat placed outside a door for wiping shoes'],
+            ['🌧️', '👗', 'RAINWEAR', 'Clothing', 'Waterproof clothing worn in the rain'],
+            ['🦶', '🛌', 'FOOTREST', 'Furniture', 'Support for resting one\'s feet while seated'],
+            ['🤚', '🧍', 'HANDSTAND', 'Gymnastics', 'Balancing upside down on one\'s hands'],
+            ['💇', '📌', 'HAIRPIN', 'Fashion', 'Pin used for fastening the hair in place'],
             ['👁️', '⚽', 'EYEBALL', 'Anatomy', 'The entire ball-shaped organ of sight'],
-            ['🧠', '⚡', 'BRAINPOWER', 'Mind', 'Intellectual capacity or mental energy'],
-            ['🔥', '🧨', 'FIRECRACKER', 'Celebration', 'Small explosive paper cylinder that pops loudly'],
-            ['💧', '🪠', 'WATERPIPE', 'Plumbing', 'Pipe used for carrying water'],
+            ['🧠', '💪', 'BRAINPOWER', 'Mind', 'Intellectual capacity or mental energy'],
+            ['🔥', '🍘', 'FIRECRACKER', 'Celebration', 'Small explosive paper cylinder that pops loudly'],
+            ['💧', '🪈', 'WATERPIPE', 'Plumbing', 'Pipe used for carrying water'],
             ['🌍', '🪱', 'EARTHWORM', 'Animals', 'Burrowing worm that lives in the soil'],
-            ['❄️', '🏔️', 'SNOWDRIFT', 'Winter', 'Bank of deep snow heaped up by wind'],
+            ['❄️', '🏎️', 'SNOWDRIFT', 'Winter', 'Bank of deep snow heaped up by wind'],
             ['🌊', '🌿', 'SEAWEED', 'Marine', 'Algae growing in the sea or ocean'],
             ['🏖️', '⚽', 'BEACHBALL', 'Fun', 'Inflatable light ball for beach games'],
-            ['🌊', '🏦', 'RIVERBANK', 'Nature', 'Sloping ground beside a river'],
-            ['⛰️', '👈', 'MOUNTAINSIDE', 'Nature', 'Sloping side of a mountain'],
+            ['🏞️', '🏦', 'RIVERBANK', 'Nature', 'Sloping ground beside a river'],
+            ['⛰️', '📐', 'MOUNTAINSIDE', 'Nature', 'Sloping side of a mountain'],
             ['⬆️', '💡', 'HIGHLIGHT', 'General', 'An outstanding part or key moment'],
             ['⬇️', '🏙️', 'DOWNTOWN', 'City', 'Central business district of a city'],
             ['⬆️', '🏙️', 'UPTOWN', 'City', 'Residential area away from the city center'],
             ['📤', '🚪', 'OUTDOORS', 'Nature', 'Any area outside in the open air'],
             ['📥', '🚪', 'INDOORS', 'Home', 'Inside a building or house'],
-            ['📤', '👉', 'OUTSIDE', 'Location', 'External side or surface of something'],
-            ['📥', '👈', 'INSIDE', 'Location', 'Inner part or interior of something'],
+            ['📤', '📐', 'OUTSIDE', 'Location', 'External side or surface of something'],
+            ['📥', '📐', 'INSIDE', 'Location', 'Inner part or interior of something'],
             ['☀️', '🔥', 'SUNBURN', 'Health', 'Reddening of skin from overexposure to sun'],
             ['🌧️', '🚿', 'RAINSHOWER', 'Weather', 'Brief period of rainfall'],
-            ['⏰', '⚙️', 'CLOCKWORK', 'Mechanism', 'System of wheels and springs inside clocks'],
-            ['⏱️', '💂', 'TIMEKEEPER', 'Jobs', 'Person who records time in sports or work'],
+            ['⏰', '💼', 'CLOCKWORK', 'Mechanism', 'System of wheels and springs inside clocks'],
+            ['⏱️', '🛡️', 'TIMEKEEPER', 'Jobs', 'Person who records time in sports or work'],
             ['⌚', '👨', 'WATCHMAN', 'Jobs', 'Guard who protects a building at night'],
-            ['👮', '👩', 'POLICEWOMAN', 'Jobs', 'Female police officer'],
+            ['🚓', '👩', 'POLICEWOMAN', 'Jobs', 'Female police officer'],
             ['📰', '🚪', 'NEWSROOM', 'Media', 'Room where news is gathered and edited'],
-            ['🏫', '🚪', 'CLASSROOM', 'School', 'Room in a school where students learn'],
+            ['👨‍🏫', '🚪', 'CLASSROOM', 'School', 'Room in a school where students learn'],
             ['⚽', '🚪', 'BALLROOM', 'Dance', 'Large room for formal dancing'],
-            ['😴', '🚪', 'RESTROOM', 'Public', 'Public room equipped with toilets and sinks'],
+            ['🛌', '🚪', 'RESTROOM', 'Public', 'Public room equipped with toilets and sinks'],
             ['🛁', '🚪', 'BATHROOM', 'Home', 'Room containing a bath or shower'],
-            ['☕', '🥄', 'TEASPOON', 'Kitchen', 'Small spoon used for stirring tea'],
-            ['🪑', '🥄', 'TABLESPOON', 'Kitchen', 'Large spoon used for serving food'],
-            ['🪑', '👕', 'TABLECLOTH', 'Home', 'Cloth used to cover a dining table'],
+            ['🍵', '🥄', 'TEASPOON', 'Kitchen', 'Small spoon used for stirring tea'],
+            ['🍽️', '🥄', 'TABLESPOON', 'Kitchen', 'Large spoon used for serving food'],
+            ['🍽️', '👕', 'TABLECLOTH', 'Home', 'Cloth used to cover a dining table'],
             ['🛏️', '🧈', 'BEDSPREAD', 'Home', 'Decorative cover for a bed'],
             ['🚪', '🪜', 'DOORSTEP', 'Home', 'Step leading up to an outer door'],
-            ['🚕', '🚗', 'TAXICAB', 'Transport', 'Car driven by a chauffeur for hire'],
+            ['🚕', '🧢', 'TAXICAB', 'Transport', 'Car driven by a chauffeur for hire'],
             ['🔥', '🏠', 'FIREHOUSE', 'Services', 'Station where fire engines are kept'],
             ['📦', '🏠', 'WAREHOUSE', 'Commerce', 'Large building for storing goods'],
             ['🟩', '🏠', 'GREENHOUSE', 'Gardening', 'Glass building for growing plants'],
             ['⚡', '🔩', 'THUNDERBOLT', 'Weather', 'Flash of lightning with simultaneous thunder'],
             ['💧', '🎨', 'WATERCOLOR', 'Art', 'Paint mixed with water for artwork'],
             ['🎨', '🖌️', 'PAINTBRUSH', 'Art', 'Brush used for applying paint'],
-            ['🎨', '🛠️', 'ARTWORK', 'Art', 'Work of art produced by an artist'],
-            ['🕸️', '🛠️', 'NETWORK', 'Technology', 'Interconnected system of computers or people'],
-            ['🖼️', '🛠️', 'FRAMEWORK', 'Architecture', 'Essential supporting structure'],
+            ['🖼️', '💼', 'ARTWORK', 'Art', 'Work of art produced by an artist'],
+            ['🕸️', '💼', 'NETWORK', 'Technology', 'Interconnected system of computers or people'],
+            ['🖼️', '💼', 'FRAMEWORK', 'Architecture', 'Essential supporting structure'],
             ['⬆️', '🎟️', 'OVERPASS', 'Transport', 'Bridge carrying a road over another road'],
             ['⬇️', '🎟️', 'UNDERPASS', 'Transport', 'Road passing underneath another road'],
             ['❌', '🏹', 'CROSSBOW', 'Weapons', 'Bow fixed across a wooden stock'],
-            ['💨', '📏', 'AIRLINE', 'Travel', 'Company that provides air transport services'],
+            ['💨', '〰️', 'AIRLINE', 'Travel', 'Company that provides air transport services'],
             ['💨', '🚢', 'AIRSHIP', 'Travel', 'Power-driven aircraft kept buoyant by gas'],
-            ['🚀', '🚢', 'SPACESHIP', 'Space', 'Vehicle designed to travel in outer space'],
-            ['🚀', '👨', 'SPACEMAN', 'Space', 'Astronaut traveling into space'],
+            ['🌌', '🚢', 'SPACESHIP', 'Space', 'Vehicle designed to travel in outer space'],
+            ['🌌', '👨', 'SPACEMAN', 'Space', 'Astronaut traveling into space'],
             ['🌙', '🪵', 'MOONBEAM', 'Nature', 'Ray of moonlight']
         ];
 
@@ -1028,7 +1098,8 @@
             soundEnabled: true,
             vocabSlideIndex: 0,
             vocabSlideAnswerRevealed: false,
-            vocabMode: 'slide'
+            vocabMode: 'slide',
+            streakRisk: null
         };
 
         // Web Audio SFX Generator
@@ -1036,6 +1107,7 @@
         function playSFX(type) {
             if (!state.soundEnabled) return;
             try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
@@ -1083,6 +1155,31 @@
         let tempIntroMode = 'solo';
         let tempIntroTime = 30;
         let tempIntroDifficulty = 'Normal';
+        let tempIntroActivity = 'hangman';
+
+        function selectIntroActivity(activity) {
+            tempIntroActivity = activity;
+            document.querySelectorAll('.intro-activity-option').forEach(el => {
+                el.classList.remove('selected', 'bg-yellow-400');
+                el.classList.add('bg-white');
+            });
+            const selected = document.getElementById(`intro-activity-${activity}`);
+            selected.classList.add('selected', 'bg-yellow-400');
+            selected.classList.remove('bg-white');
+
+            const isStudy = activity === 'vocab';
+            document.getElementById('intro-player-mode-section').classList.toggle('hidden', isStudy);
+            document.getElementById('intro-next-btn-1').textContent = isStudy ? 'START VOCABULARY STUDY →' : 'PROCEED TO DIFFICULTY →';
+            playSFX('click');
+        }
+
+        function proceedFromIntroStep1() {
+            if (tempIntroActivity === 'vocab') {
+                startGameFromMenu();
+                return;
+            }
+            goIntroStep(2);
+        }
 
         function selectIntroMode(mode) {
             tempIntroMode = mode;
@@ -1195,8 +1292,7 @@
             document.getElementById('intro-overlay').classList.add('hidden');
 
             applyPlayerModeUI();
-            startGlobalMatchTimer(state.matchDurationMinutes * 60);
-            loadCurrentPuzzle();
+            startActivity(tempIntroActivity);
         }
 
         function resetAllScores() {
@@ -1206,6 +1302,7 @@
             state.teamA.streak = 0;
             state.teamB.score = 0;
             state.teamB.streak = 0;
+            state.streakRisk = null;
             updateScoresUI();
         }
 
@@ -1217,7 +1314,7 @@
             if (msgText) {
                 document.getElementById('switch-confirm-msg').textContent = msgText;
             } else {
-                document.getElementById('switch-confirm-msg').textContent = "หากกดเปลี่ยนโหมดการเล่น เปลี่ยนเวลา หรือสลับประเภทผู้เล่น จะต้องเริ่มนับคะแนนใหม่หมดนะ! คุณแน่ใจหรือไม่?";
+                document.getElementById('switch-confirm-msg').textContent = "Changing the game mode, time limit, or player type will reset all scores! Are you sure you want to proceed?";
             }
             document.getElementById('switch-confirm-modal').classList.remove('hidden');
         }
@@ -1241,7 +1338,7 @@
 
             triggerSwitchConfirmation(() => {
                 setBaseTimerDuration(newSeconds);
-            }, `หากกดเปลี่ยนเวลาคำถามเป็น ${newSeconds} วินาที คะแนนทั้งหมดจะถูกเริ่มนับใหม่หมดนะ! คุณแน่ใจหรือไม่?`);
+            }, `Changing the question timer to ${newSeconds} seconds will reset all scores! Are you sure?`);
         }
 
         function setBaseTimerDuration(seconds) {
@@ -1253,8 +1350,22 @@
 
         function requestTabSwitch(tab) {
             if (state.activeTab === tab) return;
-            playSFX('click');
+
+            const activityNames = { hangman: 'Hangman', play: 'Quiz', vocab: 'Vocabulary Study' };
+            triggerSwitchConfirmation(() => {
+                startActivity(tab);
+            }, `Switching to ${activityNames[tab]} will reset this session and start a new one. Are you sure?`);
+        }
+
+        function startActivity(tab) {
             state.activeTab = tab;
+            tempIntroActivity = tab;
+            resetAllScores();
+            resetQuestionPool();
+            pickNextPuzzle();
+
+            stopCurrentQuestionTimer();
+            clearInterval(state.globalTimerInterval);
 
             document.getElementById('view-hangman').classList.add('hidden');
             document.getElementById('view-play').classList.add('hidden');
@@ -1265,18 +1376,33 @@
             document.getElementById('tab-vocab').className = "solid-btn bg-slate-100 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1";
 
             if (tab === 'hangman') {
+                applyPlayerModeUI();
                 document.getElementById('view-hangman').classList.remove('hidden');
                 document.getElementById('tab-hangman').className = "solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1";
+                document.getElementById('game-controls').classList.remove('hidden');
+                document.getElementById('optional-controls').classList.remove('hidden');
+                document.getElementById('mobile-more-btn').classList.remove('hidden');
+                startGlobalMatchTimer(state.matchDurationMinutes * 60);
+                loadCurrentPuzzle();
             } else if (tab === 'play') {
+                applyPlayerModeUI();
                 document.getElementById('view-play').classList.remove('hidden');
                 document.getElementById('tab-play').className = "solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1";
+                document.getElementById('game-controls').classList.remove('hidden');
+                document.getElementById('optional-controls').classList.remove('hidden');
+                document.getElementById('mobile-more-btn').classList.remove('hidden');
+                startGlobalMatchTimer(state.matchDurationMinutes * 60);
+                loadCurrentPuzzle();
             } else if (tab === 'vocab') {
+                document.getElementById('multiplayer-bar').classList.add('hidden');
                 document.getElementById('view-vocab').classList.remove('hidden');
                 document.getElementById('tab-vocab').className = "solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1";
+                document.getElementById('game-controls').classList.add('hidden');
+                document.getElementById('optional-controls').classList.add('hidden');
+                document.getElementById('mobile-more-btn').classList.add('hidden');
                 renderVocabSlide();
             }
-            toggleMobileMenu(false);
-            loadCurrentPuzzle();
+            toggleMobileOptions(false);
         }
 
         function requestPlayerModeToggle() {
@@ -1286,7 +1412,7 @@
                 state.mode = (state.mode === 'solo') ? 'team' : 'solo';
                 applyPlayerModeUI();
                 restartCurrentQuestionTimer();
-            }, `หากกดสลับโหมดการเล่นเป็น ${nextModeName} จะต้องเริ่มนับคะแนนใหม่หมดนะ! คุณแน่ใจหรือไม่?`);
+            }, `Switching the game mode to ${nextModeName} will reset all scores! Are you sure?`);
         }
 
         function requestHomeNavigation() {
@@ -1294,7 +1420,7 @@
                 document.getElementById('intro-overlay').classList.remove('hidden');
                 stopCurrentQuestionTimer();
                 clearInterval(state.globalTimerInterval);
-            }, "หากกลับสู่หน้าหลัก คะแนนทั้งหมดจะถูกรีเซ็ตและนับใหม่หมดนะ! คุณแน่ใจหรือไม่?");
+            }, "Returning to the main menu will reset all game progress and scores! Are you sure?");
         }
 
         function applyPlayerModeUI() {
@@ -1305,6 +1431,8 @@
 
             if (isTeam) {
                 bar.classList.remove('hidden');
+                document.getElementById('reset-team-match-btn').classList.remove('hidden');
+                document.getElementById('reset-team-match-btn').classList.add('flex');
                 modeBtnIcon.textContent = '⚔️';
                 modeBtnLabel.textContent = 'Multiplayer';
                 document.getElementById('display-team-a-avatar').textContent = state.teamA.avatar;
@@ -1312,6 +1440,8 @@
                 updateMultiplayerScoreboard();
             } else {
                 bar.classList.add('hidden');
+                document.getElementById('reset-team-match-btn').classList.add('hidden');
+                document.getElementById('reset-team-match-btn').classList.remove('flex');
                 modeBtnIcon.textContent = '🧘‍♂️';
                 modeBtnLabel.textContent = 'Single Player';
             }
@@ -1518,6 +1648,7 @@
                     state.questionAnswered = true;
                     stopCurrentQuestionTimer();
                     resetStreakForActivePlayer();
+                    resolveNextQuestionChallenge(false);
                     showHangmanFeedback(false, `💔 OUT OF HEARTS! Answer was "${puzzle.answer}"`);
                 }
             }
@@ -1533,9 +1664,9 @@
             if (isSuccess) {
                 overlay.className = "absolute inset-x-3 sm:inset-x-8 top-1/2 -translate-y-1/2 z-30 py-4 px-5 rounded-2xl font-black text-base sm:text-xl border-4 border-slate-900 shadow-[6px_6px_0px_0px_#0f172a] animate-pop text-center flex flex-col items-center justify-center gap-3 bg-emerald-400 text-slate-900";
             } else {
-                overlay.className = "absolute inset-x-3 sm:inset-x-8 top-1/2 -translate-y-1/2 z-30 py-4 px-5 rounded-2xl font-black text-base sm:text-xl border-4 border-slate-900 shadow-[6px_6px_0px_0px_#0f172a] animate-pop text-center flex flex-col items-center justify-center gap-3 bg-red-500 text-white";
+                overlay.className = "absolute inset-x-3 sm:inset-x-8 top-1/2 -translate-y-1/2 z-30 py-4 px-5 rounded-2xl font-black text-base sm:text-xl border-4 border-slate-900 shadow-[6px_6px_0px_0px_#0f172a] animate-pop text-center flex flex-col items-center justify-center gap-3 bg-red-400 text-white";
             }
-            content.innerHTML = `<div>${text}</div>`;
+            content.textContent = text;
             overlay.classList.remove('hidden');
         }
 
@@ -1544,207 +1675,242 @@
             container.innerHTML = '';
             for (let i = 0; i < 5; i++) {
                 const heart = document.createElement('span');
-                heart.textContent = (i < state.hangmanHearts) ? '❤️' : '🖤';
+                heart.textContent = i < state.hangmanHearts ? '❤️' : '🖤';
+                heart.className = i < state.hangmanHearts ? '' : 'opacity-50 grayscale';
                 container.appendChild(heart);
             }
-
             const statusText = document.getElementById('hm-status-text');
-            if (state.hangmanHearts >= 4) {
-                statusText.textContent = "Healthy & Ready!";
-                statusText.className = "text-xs font-black text-green-700";
-            } else if (state.hangmanHearts >= 2) {
-                statusText.textContent = "Getting Tricky...";
-                statusText.className = "text-xs font-black text-amber-700";
+            if (state.hangmanHearts === 5) { statusText.textContent = "Healthy & Ready!"; statusText.className = "text-xs font-black text-green-700"; }
+            else if (state.hangmanHearts > 2) { statusText.textContent = "Taking Damage..."; statusText.className = "text-xs font-black text-amber-600"; }
+            else { statusText.textContent = "CRITICAL HEALTH!"; statusText.className = "text-xs font-black text-red-600 animate-pulse"; }
+        }
+
+        function nextHangman() {
+            pickNextPuzzle();
+            if (state.mode === 'team' && !keepChallengeTeamTurn()) switchTeamTurn();
+            loadCurrentPuzzle();
+        }
+
+        function giveHangmanHint() {
+            if (state.hangmanHintUsed || state.questionAnswered) return;
+            state.hangmanHintUsed = true;
+            playSFX('click');
+            const puzzle = puzzles[state.currentPuzzleIndex];
+            const box = document.getElementById('hm-hint-box');
+            document.getElementById('hm-hint-text').textContent = puzzle.hint;
+            box.classList.remove('hidden');
+        }
+
+        function skipHangmanPuzzle() {
+            if (state.questionAnswered) return;
+            resetStreakForActivePlayer();
+            resolveNextQuestionChallenge(false);
+            nextHangman();
+        }
+
+        function handleQuizSubmit(event) {
+            event.preventDefault();
+            if (state.questionAnswered) return;
+            const inputEl = document.getElementById('quiz-input');
+            const userAns = inputEl.value.trim().toUpperCase();
+            const puzzle = puzzles[state.currentPuzzleIndex];
+
+            if (userAns === puzzle.answer) {
+                state.questionAnswered = true;
+                stopCurrentQuestionTimer();
+                playSFX('correct');
+                addScore(1);
+                showQuizFeedback(true, `🎉 CORRECT!`);
             } else {
-                statusText.textContent = "Danger Zone!";
-                statusText.className = "text-xs font-black text-red-600 animate-pulse";
+                playSFX('wrong');
+                inputEl.value = '';
+                renderQuizTypedBoxes();
+                inputEl.classList.add('bg-red-100');
+                setTimeout(() => inputEl.classList.remove('bg-red-100'), 300);
             }
         }
 
+        function onQuizInputType(inputEl) {
+            inputEl.value = inputEl.value.replace(/[^a-zA-Z]/g, '').toUpperCase();
+            renderQuizTypedBoxes();
+        }
+
         function renderQuizTypedBoxes() {
+            const inputEl = document.getElementById('quiz-input');
+            const userText = inputEl.value;
             const puzzle = puzzles[state.currentPuzzleIndex];
-            const typed = (document.getElementById('quiz-input').value || '').toUpperCase();
             const container = document.getElementById('quiz-typed-boxes');
             container.innerHTML = '';
 
             for (let i = 0; i < puzzle.answer.length; i++) {
                 const box = document.createElement('div');
-                const expectedChar = puzzle.answer[i];
-                const typedChar = typed[i] || '';
-
-                if (typedChar) {
-                    if (typedChar === expectedChar) {
-                        box.className = 'w-7 h-9 sm:w-9 sm:h-11 solid-card char-box-correct font-black text-base sm:text-xl flex items-center justify-center';
+                box.className = 'w-8 h-10 sm:w-11 sm:h-12 border-3 rounded-xl font-black text-lg sm:text-2xl flex items-center justify-center shadow-[2px_2px_0px_0px_#0f172a]';
+                
+                if (i < userText.length) {
+                    box.textContent = userText[i];
+                    if (userText[i] === puzzle.answer[i]) {
+                        box.classList.add('char-box-correct');
                     } else {
-                        box.className = 'w-7 h-9 sm:w-9 sm:h-11 solid-card char-box-wrong font-black text-base sm:text-xl flex items-center justify-center';
+                        box.classList.add('char-box-wrong');
                     }
-                    box.textContent = typedChar;
                 } else {
-                    box.className = 'w-7 h-9 sm:w-9 sm:h-11 solid-card char-box-empty font-black text-base sm:text-xl flex items-center justify-center';
-                    box.textContent = '_';
+                    box.textContent = '';
+                    box.classList.add('char-box-empty');
                 }
                 container.appendChild(box);
             }
         }
 
-        function onQuizInputType(input) {
-            input.value = input.value.toUpperCase().replace(/[^A-Z]/g, '');
-            renderQuizTypedBoxes();
-        }
-
-        function handleQuizSubmit(event) {
-            if (event) event.preventDefault();
-            if (state.questionAnswered) return;
-
-            const puzzle = puzzles[state.currentPuzzleIndex];
-            const typed = document.getElementById('quiz-input').value.trim().toUpperCase();
-
-            if (typed === puzzle.answer) {
-                state.questionAnswered = true;
-                stopCurrentQuestionTimer();
-                playSFX('correct');
-                addScore(1);
-                showQuizFeedback(true, `🎉 CORRECT! Answer is "${puzzle.answer}"`);
-            } else {
-                playSFX('wrong');
-                showQuizFeedback(false, `❌ INCORRECT! Try again or click Hint.`);
-                setTimeout(() => {
-                    document.getElementById('quiz-feedback-overlay').classList.add('hidden');
-                }, 1200);
-            }
-        }
-
-        // Quiz Mode Reveal Answer Flow
-        function revealQuizAnswer() {
-            if (state.questionAnswered) return;
-            playSFX('click');
-            document.getElementById('reveal-confirm-modal').classList.remove('hidden');
-        }
-
-        function cancelRevealAnswer() {
-            playSFX('click');
-            document.getElementById('reveal-confirm-modal').classList.add('hidden');
-        }
-
-        function confirmRevealAnswer() {
-            playSFX('click');
-            document.getElementById('reveal-confirm-modal').classList.add('hidden');
-
-            const puzzle = puzzles[state.currentPuzzleIndex];
-            state.questionAnswered = true;
-            stopCurrentQuestionTimer();
-            resetStreakForActivePlayer();
-
-            // Lock Input and Submit buttons to prevent post-reveal submission bug
-            const quizInput = document.getElementById('quiz-input');
-            const quizSubmitBtn = document.getElementById('quiz-submit-btn');
-            const quizRevealBtn = document.getElementById('quiz-reveal-btn');
-
-            quizInput.value = puzzle.answer;
-            quizInput.disabled = true;
-            quizInput.placeholder = "ANSWER REVEALED";
-            quizInput.classList.add('opacity-50', 'cursor-not-allowed');
-
-            if (quizSubmitBtn) {
-                quizSubmitBtn.disabled = true;
-                quizSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-            if (quizRevealBtn) {
-                quizRevealBtn.disabled = true;
-                quizRevealBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-
-            renderQuizTypedBoxes();
-            showQuizFeedback(false, `👁️ ANSWER REVEALED: "${puzzle.answer}" (0 Points)`);
-        }
-
         function showQuizFeedback(isSuccess, text) {
             const overlay = document.getElementById('quiz-feedback-overlay');
             const content = document.getElementById('quiz-feedback-content');
-
+            
             if (isSuccess) {
                 overlay.className = "absolute inset-x-3 sm:inset-x-8 top-1/2 -translate-y-1/2 z-30 py-4 px-5 rounded-2xl font-black text-base sm:text-xl border-4 border-slate-900 shadow-[6px_6px_0px_0px_#0f172a] animate-pop text-center flex flex-col items-center justify-center gap-3 bg-emerald-400 text-slate-900";
             } else {
                 overlay.className = "absolute inset-x-3 sm:inset-x-8 top-1/2 -translate-y-1/2 z-30 py-4 px-5 rounded-2xl font-black text-base sm:text-xl border-4 border-slate-900 shadow-[6px_6px_0px_0px_#0f172a] animate-pop text-center flex flex-col items-center justify-center gap-3 bg-amber-400 text-slate-900";
             }
-            content.innerHTML = `<div>${text}</div>`;
+            content.textContent = text;
             overlay.classList.remove('hidden');
         }
 
         function dismissQuizFeedbackAndNext() {
-            document.getElementById('quiz-feedback-overlay').classList.add('hidden');
-            nextQuiz();
-        }
-
-        function giveHangmanHint() {
-            if (state.hangmanHintUsed) return;
-            state.hangmanHintUsed = true;
-            playSFX('click');
-            const puzzle = puzzles[state.currentPuzzleIndex];
-            document.getElementById('hm-hint-text').textContent = puzzle.hint;
-            document.getElementById('hm-hint-box').classList.remove('hidden');
-        }
-
-        function skipHangmanPuzzle() {
-            playSFX('click');
-            resetStreakForActivePlayer();
-            nextHangman();
-        }
-
-        function nextHangman() {
-            playSFX('click');
-            switchTurnIfMultiplayer();
-            pickNextPuzzle();
-            loadCurrentPuzzle();
-        }
-
-        function giveQuizHint() {
-            if (state.quizHintUsed) return;
-            state.quizHintUsed = true;
-            playSFX('click');
-            const puzzle = puzzles[state.currentPuzzleIndex];
-            const container = document.getElementById('hint-boxes');
-            
-            const hintTag = document.createElement('div');
-            hintTag.className = "py-1 px-3 bg-amber-100 text-slate-900 text-xs sm:text-sm font-bold rounded-xl border-2 border-slate-900 text-center animate-pop";
-            hintTag.innerHTML = `💡 Hint: ${puzzle.hint}`;
-            container.appendChild(hintTag);
-        }
-
-        function skipQuizPuzzle() {
-            playSFX('click');
-            resetStreakForActivePlayer();
             nextQuiz();
         }
 
         function nextQuiz() {
-            playSFX('click');
-            switchTurnIfMultiplayer();
             pickNextPuzzle();
+            if (state.mode === 'team' && !keepChallengeTeamTurn()) switchTeamTurn();
             loadCurrentPuzzle();
         }
 
-        function addScore(pts) {
-            if (state.mode === 'solo') {
-                state.soloScore += pts;
-                state.soloStreak += 1;
-                updateScoresUI();
-            } else {
-                let currentTeam = (state.activeTurn === 'a') ? state.teamA : state.teamB;
-                currentTeam.score += pts;
-                currentTeam.streak += 1;
-                updateScoresUI();
+        function giveQuizHint() {
+            if (state.quizHintUsed || state.questionAnswered) return;
+            state.quizHintUsed = true;
+            playSFX('click');
+            const puzzle = puzzles[state.currentPuzzleIndex];
+            const container = document.getElementById('hint-boxes');
+            const box = document.createElement('div');
+            box.className = 'py-1 px-3 bg-amber-50 text-slate-900 text-xs sm:text-sm font-bold rounded-xl border-2 border-slate-900 text-center animate-pop';
+            box.innerHTML = `💡 ${puzzle.hint}`;
+            container.appendChild(box);
+        }
 
-                if (currentTeam.streak % 5 === 0 && currentTeam.streak > 0) {
-                    triggerStreakBonusModal(currentTeam);
-                }
+        function revealQuizAnswer() {
+            if (state.questionAnswered) return;
+            document.getElementById('reveal-confirm-modal').classList.remove('hidden');
+        }
+
+        function cancelRevealAnswer() {
+            document.getElementById('reveal-confirm-modal').classList.add('hidden');
+        }
+
+        function confirmRevealAnswer() {
+            document.getElementById('reveal-confirm-modal').classList.add('hidden');
+            state.questionAnswered = true;
+            stopCurrentQuestionTimer();
+            resetStreakForActivePlayer();
+            resolveNextQuestionChallenge(false);
+            const puzzle = puzzles[state.currentPuzzleIndex];
+            document.getElementById('quiz-input').value = puzzle.answer;
+            renderQuizTypedBoxes();
+            showQuizFeedback(false, `Answer Revealed: ${puzzle.answer}`);
+        }
+
+        function skipQuizPuzzle() {
+            if (state.questionAnswered) return;
+            resetStreakForActivePlayer();
+            resolveNextQuestionChallenge(false);
+            nextQuiz();
+        }
+
+        function switchTeamTurn() {
+            state.activeTurn = state.activeTurn === 'a' ? 'b' : 'a';
+            updateAvatarDisplays();
+            updateMultiplayerScoreboard();
+        }
+
+        function setTeamTurn(team) {
+            if (state.mode !== 'team' || state.activeTurn === team) return;
+            if (state.streakRisk && state.streakRisk.team !== team) return;
+            state.activeTurn = team;
+            updateAvatarDisplays();
+            updateScoresUI();
+            restartCurrentQuestionTimer();
+        }
+
+        function resetTeamMatch() {
+            triggerSwitchConfirmation(null, "This will reset both teams' scores to zero! Are you sure?");
+        }
+
+        function updateMultiplayerScoreboard() {
+            const cardA = document.getElementById('team-card-a');
+            const cardB = document.getElementById('team-card-b');
+            const badgeA = document.getElementById('turn-badge-a');
+            const badgeB = document.getElementById('turn-badge-b');
+
+            document.getElementById('score-a').textContent = state.teamA.score;
+            document.getElementById('score-b').textContent = state.teamB.score;
+
+            if (state.activeTurn === 'a') {
+                cardA.classList.add('active-turn');
+                cardA.classList.remove('opacity-75');
+                badgeA.classList.remove('hidden');
+                
+                cardB.classList.remove('active-turn');
+                cardB.classList.add('opacity-75');
+                badgeB.classList.add('hidden');
+            } else {
+                cardB.classList.add('active-turn');
+                cardB.classList.remove('opacity-75');
+                badgeB.classList.remove('hidden');
+                
+                cardA.classList.remove('active-turn');
+                cardA.classList.add('opacity-75');
+                badgeA.classList.add('hidden');
             }
+
+            const streakIndA = document.getElementById('streak-indicator-a');
+            if (state.teamA.streak >= 2) { streakIndA.classList.remove('hidden'); streakIndA.textContent = `🔥 ${state.teamA.streak}`; }
+            else { streakIndA.classList.add('hidden'); }
+
+            const streakIndB = document.getElementById('streak-indicator-b');
+            if (state.teamB.streak >= 2) { streakIndB.classList.remove('hidden'); streakIndB.textContent = `🔥 ${state.teamB.streak}`; }
+            else { streakIndB.classList.add('hidden'); }
+        }
+
+        function addScore(points) {
+            if (state.mode === 'solo') {
+                state.soloScore += points;
+                state.soloStreak++;
+            } else {
+                const currentTeam = state.activeTurn === 'a' ? state.teamA : state.teamB;
+                currentTeam.score += points;
+                currentTeam.streak++;
+                resolveNextQuestionChallenge(true);
+                if (currentTeam.streak > 0 && currentTeam.streak % 5 === 0) triggerStreakRewardModal();
+            }
+            updateScoresUI();
+        }
+
+        function keepChallengeTeamTurn() {
+            return state.streakRisk && state.streakRisk.team === state.activeTurn;
+        }
+
+        function resolveNextQuestionChallenge(succeeded) {
+            if (!state.streakRisk) return;
+
+            const owner = state.streakRisk.team === 'a' ? state.teamA : state.teamB;
+            const opponent = state.streakRisk.team === 'a' ? state.teamB : state.teamA;
+            if (succeeded && state.activeTurn === state.streakRisk.team) owner.score++;
+            else opponent.score++;
+            state.streakRisk = null;
+            updateScoresUI();
         }
 
         function resetStreakForActivePlayer() {
-            if (state.mode === 'solo') {
-                state.soloStreak = 0;
-            } else {
+            if (state.mode === 'solo') state.soloStreak = 0;
+            else {
                 if (state.activeTurn === 'a') state.teamA.streak = 0;
                 else state.teamB.streak = 0;
             }
@@ -1752,121 +1918,92 @@
         }
 
         function updateScoresUI() {
-            document.getElementById('hm-score').textContent = state.soloScore;
-            document.getElementById('hm-streak-count').textContent = state.soloStreak;
-            document.getElementById('quiz-score').textContent = state.soloScore;
-            document.getElementById('streak-count').textContent = state.soloStreak;
+            const activePlayer = state.mode === 'solo'
+                ? { score: state.soloScore, streak: state.soloStreak }
+                : (state.activeTurn === 'a' ? state.teamA : state.teamB);
 
-            updateMultiplayerScoreboard();
+            document.getElementById('hm-score').textContent = activePlayer.score;
+            document.getElementById('hm-streak-count').textContent = activePlayer.streak;
+            document.getElementById('quiz-score').textContent = activePlayer.score;
+            document.getElementById('streak-count').textContent = activePlayer.streak;
+
+            if (state.mode === 'team') updateMultiplayerScoreboard();
         }
 
-        function updateMultiplayerScoreboard() {
-            document.getElementById('score-a').textContent = state.teamA.score;
-            document.getElementById('score-b').textContent = state.teamB.score;
-
-            const badgeA = document.getElementById('turn-badge-a');
-            const badgeB = document.getElementById('turn-badge-b');
-            const cardA = document.getElementById('team-card-a');
-            const cardB = document.getElementById('team-card-b');
-
-            if (state.activeTurn === 'a') {
-                badgeA.classList.remove('hidden');
-                badgeB.classList.add('hidden');
-                cardA.classList.add('active-turn');
-                cardA.classList.remove('opacity-75');
-                cardB.classList.remove('active-turn');
-                cardB.classList.add('opacity-75');
-            } else {
-                badgeB.classList.remove('hidden');
-                badgeA.classList.add('hidden');
-                cardB.classList.add('active-turn');
-                cardB.classList.remove('opacity-75');
-                cardA.classList.remove('active-turn');
-                cardA.classList.add('opacity-75');
-            }
-
-            const streakA = document.getElementById('streak-indicator-a');
-            const streakB = document.getElementById('streak-indicator-b');
-
-            if (state.teamA.streak > 0) {
-                streakA.textContent = `🔥 ${state.teamA.streak}`;
-                streakA.classList.remove('hidden');
-            } else {
-                streakA.classList.add('hidden');
-            }
-
-            if (state.teamB.streak > 0) {
-                streakB.textContent = `🔥 ${state.teamB.streak}`;
-                streakB.classList.remove('hidden');
-            } else {
-                streakB.classList.add('hidden');
-            }
-
-            updateAvatarDisplays();
-        }
-
-        function setTeamTurn(team) {
-            if (state.mode !== 'team') return;
-            state.activeTurn = team;
-            updateMultiplayerScoreboard();
-            restartCurrentQuestionTimer();
-        }
-
-        function switchTurnIfMultiplayer() {
-            if (state.mode === 'team') {
-                state.activeTurn = (state.activeTurn === 'a') ? 'b' : 'a';
-                updateMultiplayerScoreboard();
-            }
-        }
-
-        function resetTeamMatch() {
-            triggerSwitchConfirmation(() => {
-                resetAllScores();
-                restartCurrentQuestionTimer();
-            }, "หากกดรีเซ็ตคะแนน ทีมทั้งสองฝั่งจะกลับไปเริ่มต้นที่ 0 คะแนนใหม่หมดนะ! คุณแน่ใจหรือไม่?");
-        }
-
-        function triggerStreakBonusModal(team) {
+        function triggerStreakRewardModal() {
             playSFX('victory');
-            document.getElementById('streak-reward-title').textContent = `${team.name} 5-STREAK BONUS!`;
             document.getElementById('streak-reward-modal').classList.remove('hidden');
+            const title = document.getElementById('streak-reward-title');
+            if (state.activeTurn === 'a') {
+                title.textContent = "BLUE TEAM: 5-STREAK BONUS!";
+                title.className = "text-xl sm:text-2xl font-black font-display text-blue-700 uppercase";
+            } else {
+                title.textContent = "RED TEAM: 5-STREAK BONUS!";
+                title.className = "text-xl sm:text-2xl font-black font-display text-red-700 uppercase";
+            }
         }
 
-        function applyStreakReward(rewardType) {
+        function applyStreakReward(type) {
             document.getElementById('streak-reward-modal').classList.add('hidden');
-            let currentTeam = (state.activeTurn === 'a') ? state.teamA : state.teamB;
-            let opponentTeam = (state.activeTurn === 'a') ? state.teamB : state.teamA;
+            playSFX('click');
+            
+            const activeTeam = state.activeTurn === 'a' ? state.teamA : state.teamB;
+            const oppTeam = state.activeTurn === 'a' ? state.teamB : state.teamA;
 
-            if (rewardType === 'steal') {
-                if (opponentTeam.score > 0) {
-                    opponentTeam.score -= 1;
-                    currentTeam.score += 1;
-                } else {
-                    currentTeam.score += 1;
+            if (type === 'steal') {
+                if (oppTeam.score > 0) {
+                    oppTeam.score -= 1;
+                    activeTeam.score += 1;
                 }
-            } else if (rewardType === 'debuffTime') {
-                if (opponentTeam.timeLimit > 15) {
-                    opponentTeam.timeLimit -= 15;
-                } else {
-                    opponentTeam.timeLimit = 15;
-                }
+            } else if (type === 'debuffTime') {
+                if (oppTeam.timeLimit === 60) oppTeam.timeLimit = 45;
+                else if (oppTeam.timeLimit === 45) oppTeam.timeLimit = 30;
+                else if (oppTeam.timeLimit === 30) oppTeam.timeLimit = 15;
+            } else if (type === 'nextQuestionBonus') {
+                state.streakRisk = { team: state.activeTurn };
             }
-
             updateScoresUI();
         }
 
-        function startCurrentQuestionTimer() {
-            stopCurrentQuestionTimer();
+        function startGlobalMatchTimer(totalSeconds) {
+            clearInterval(state.globalTimerInterval);
+            state.globalTimeLeft = totalSeconds;
+            updateGlobalTimerDisplay();
 
-            let activeLimit = state.baseTimerDuration;
-            if (state.mode === 'team') {
-                activeLimit = (state.activeTurn === 'a') ? state.teamA.timeLimit : state.teamB.timeLimit;
+            function tick() {
+                if (state.globalTimeLeft <= 0) {
+                    clearInterval(state.globalTimerInterval);
+                    stopCurrentQuestionTimer();
+                    endMatch();
+                    return;
+                }
+                state.globalTimeLeft--;
+                updateGlobalTimerDisplay();
             }
 
-            state.questionTimeLeft = activeLimit;
+            state.globalTimerInterval = setInterval(tick, 1000);
+        }
+
+        function updateGlobalTimerDisplay() {
+            const m = Math.floor(state.globalTimeLeft / 60);
+            const s = state.globalTimeLeft % 60;
+            const disp = document.getElementById('global-timer-display');
+            disp.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            if (state.globalTimeLeft <= 60) disp.classList.add('text-red-500', 'animate-pulse');
+            else disp.classList.remove('text-red-500', 'animate-pulse');
+        }
+
+        function restartCurrentQuestionTimer() {
+            stopCurrentQuestionTimer();
+            let limit = state.baseTimerDuration;
+            if (state.mode === 'team') {
+                limit = state.activeTurn === 'a' ? state.teamA.timeLimit : state.teamB.timeLimit;
+            }
+            state.questionTimeLeft = limit;
             updateQuestionTimerDisplay();
 
-            state.questionTimerInterval = setInterval(() => {
+            function tick() {
+                if (state.questionAnswered) { clearInterval(state.questionTimerInterval); return; }
                 state.questionTimeLeft--;
                 updateQuestionTimerDisplay();
 
@@ -1874,168 +2011,100 @@
                     stopCurrentQuestionTimer();
                     handleQuestionTimeout();
                 }
-            }, 1000);
+            }
+
+            state.questionTimerInterval = setInterval(tick, 1000);
         }
 
         function stopCurrentQuestionTimer() {
-            if (state.questionTimerInterval) {
-                clearInterval(state.questionTimerInterval);
-                state.questionTimerInterval = null;
-            }
-        }
-
-        function restartCurrentQuestionTimer() {
-            startCurrentQuestionTimer();
-        }
-
-        function updateQuestionTimerDisplay() {
-            const display = document.getElementById('timer-display');
-            const mins = Math.floor(state.questionTimeLeft / 60);
-            const secs = state.questionTimeLeft % 60;
-            display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-
-            if (state.questionTimeLeft <= 5) {
-                display.className = "text-sm sm:text-base font-bold min-w-[3.5ch] text-red-500 animate-ping";
-            } else {
-                display.className = "text-sm sm:text-base font-bold min-w-[3.5ch] text-yellow-300";
-            }
+            clearInterval(state.questionTimerInterval);
         }
 
         function handleQuestionTimeout() {
-            playSFX('wrong');
+            if (state.questionAnswered) return;
             state.questionAnswered = true;
+            playSFX('wrong');
             resetStreakForActivePlayer();
+            resolveNextQuestionChallenge(false);
             const puzzle = puzzles[state.currentPuzzleIndex];
-
-            if (state.activeTab === 'hangman') {
-                showHangmanFeedback(false, `⏰ TIME'S UP! Answer was "${puzzle.answer}"`);
-            } else if (state.activeTab === 'play') {
-                showQuizFeedback(false, `⏰ TIME'S UP! Answer was "${puzzle.answer}"`);
-            }
+            if (state.activeTab === 'hangman') showHangmanFeedback(false, `⏰ TIME'S UP! Answer: ${puzzle.answer}`);
+            else if (state.activeTab === 'play') showQuizFeedback(false, `⏰ TIME'S UP! Answer: ${puzzle.answer}`);
         }
 
-        function startGlobalMatchTimer(totalSeconds) {
-            if (state.globalTimerInterval) clearInterval(state.globalTimerInterval);
+        function updateQuestionTimerDisplay() {
+            const m = Math.floor(state.questionTimeLeft / 60);
+            const s = state.questionTimeLeft % 60;
+            const disp = document.getElementById('timer-display');
+            if (m > 0) disp.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+            else disp.textContent = s.toString();
 
-            state.globalTimeLeft = totalSeconds;
-            updateGlobalTimerDisplay();
-
-            state.globalTimerInterval = setInterval(() => {
-                state.globalTimeLeft--;
-                updateGlobalTimerDisplay();
-
-                if (state.globalTimeLeft <= 0) {
-                    clearInterval(state.globalTimerInterval);
-                    triggerMatchVictory();
-                }
-            }, 1000);
+            if (state.questionTimeLeft <= 5) disp.className = "text-sm sm:text-base font-bold min-w-[3.5ch] text-red-500 animate-pulse";
+            else disp.className = "text-sm sm:text-base font-bold min-w-[3.5ch] text-yellow-300";
         }
 
-        function updateGlobalTimerDisplay() {
-            const display = document.getElementById('global-timer-display');
-            const mins = Math.floor(state.globalTimeLeft / 60);
-            const secs = state.globalTimeLeft % 60;
-            display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        }
-
-        function triggerMatchVictory() {
-            stopCurrentQuestionTimer();
+        function endMatch() {
             playSFX('victory');
-
-            const modal = document.getElementById('victory-modal');
+            document.getElementById('victory-modal').classList.remove('hidden');
+            const title = document.getElementById('victory-title');
             const details = document.getElementById('victory-details');
 
             if (state.mode === 'solo') {
-                document.getElementById('victory-title').textContent = "MATCH COMPLETE!";
-                details.innerHTML = `
-                    <div class="text-xl">Your Final Score: <span class="text-blue-900">${state.soloScore}</span> PTS</div>
-                    <div class="text-xs text-slate-600 mt-1">Great job solving emoji compound rebus puzzles!</div>
-                `;
+                title.textContent = "TIME'S UP!";
+                details.innerHTML = `<div>Great job!</div><div class="text-2xl mt-2">⭐ TOTAL SCORE: ${state.soloScore}</div>`;
             } else {
-                let winnerText = "";
                 if (state.teamA.score > state.teamB.score) {
-                    winnerText = `🏆 BLUE TEAM WINS! (${state.teamA.score} - ${state.teamB.score})`;
+                    title.textContent = "BLUE TEAM WINS! 🔵";
                 } else if (state.teamB.score > state.teamA.score) {
-                    winnerText = `🏆 RED TEAM WINS! (${state.teamB.score} - ${state.teamA.score})`;
+                    title.textContent = "RED TEAM WINS! 🔴";
                 } else {
-                    winnerText = `🤝 IT'S A TIE! (${state.teamA.score} - ${state.teamB.score})`;
+                    title.textContent = "IT'S A TIE! 🤝";
                 }
-                document.getElementById('victory-title').textContent = "MATCH OVER!";
                 details.innerHTML = `
-                    <div class="text-xl text-blue-900">${winnerText}</div>
-                    <div class="flex justify-around mt-3 pt-2 border-t border-slate-300">
-                        <div>🔵 Blue: <b>${state.teamA.score}</b> Pts</div>
-                        <div>🔴 Red: <b>${state.teamB.score}</b> Pts</div>
-                    </div>
+                    <div class="flex justify-between items-center bg-blue-100 p-2 rounded border-2 border-blue-900"><span>🔵 BLUE SCORE:</span> <span class="text-xl font-black">${state.teamA.score}</span></div>
+                    <div class="flex justify-between items-center bg-red-100 p-2 rounded border-2 border-red-900"><span>🔴 RED SCORE:</span> <span class="text-xl font-black">${state.teamB.score}</span></div>
                 `;
             }
-
-            modal.classList.remove('hidden');
         }
 
         function restartGameFull() {
             document.getElementById('victory-modal').classList.add('hidden');
-            resetAllScores();
-            startGlobalMatchTimer(state.matchDurationMinutes * 60);
-            loadCurrentPuzzle();
-        }
-
-        function setVocabViewMode(mode) {
-            state.vocabMode = mode;
-            playSFX('click');
-            if (mode === 'slide') {
-                document.getElementById('vocab-slide-view').classList.remove('hidden');
-                document.getElementById('vocab-grid-view').classList.add('hidden');
-                document.getElementById('vocab-mode-slide').className = "solid-btn bg-yellow-400 text-slate-900 px-3 py-1 text-xs sm:text-sm font-black flex items-center gap-1";
-                document.getElementById('vocab-mode-grid').className = "solid-btn bg-slate-100 text-slate-900 px-3 py-1 text-xs sm:text-sm font-black flex items-center gap-1";
-                renderVocabSlide();
-            } else {
-                document.getElementById('vocab-slide-view').classList.add('hidden');
-                document.getElementById('vocab-grid-view').classList.remove('hidden');
-                document.getElementById('vocab-grid-view').classList.add('flex');
-                document.getElementById('vocab-mode-grid').className = "solid-btn bg-yellow-400 text-slate-900 px-3 py-1 text-xs sm:text-sm font-black flex items-center gap-1";
-                document.getElementById('vocab-mode-slide').className = "solid-btn bg-slate-100 text-slate-900 px-3 py-1 text-xs sm:text-sm font-black flex items-center gap-1";
-                populateVocabCategoryFilter();
-                renderVocabGrid();
-            }
+            document.getElementById('intro-overlay').classList.remove('hidden');
+            goIntroStep(1);
         }
 
         function renderVocabSlide() {
-            const item = puzzles[state.vocabSlideIndex];
+            const puzzle = puzzles[state.vocabSlideIndex];
+            document.getElementById('slide-emoji1').textContent = puzzle.part1;
+            document.getElementById('slide-emoji2').textContent = puzzle.part2;
             document.getElementById('slide-num').textContent = state.vocabSlideIndex + 1;
             document.getElementById('slide-total').textContent = puzzles.length;
 
-            document.getElementById('slide-emoji1').textContent = item.part1;
-            document.getElementById('slide-emoji2').textContent = item.part2;
-            document.getElementById('slide-category-header').textContent = `CATEGORY: ${item.category}`;
-
-            const ansBox = document.getElementById('slide-answer-container');
-            const promptBox = document.getElementById('slide-prompt-text');
-
-            ansBox.textContent = item.answer;
+            document.getElementById('slide-category-header').textContent = `CATEGORY: ${puzzle.category}`;
             state.vocabSlideAnswerRevealed = false;
-            ansBox.classList.add('hidden');
-            promptBox.classList.remove('hidden');
+            document.getElementById('slide-answer-container').textContent = puzzle.answer;
+            document.getElementById('slide-answer-container').classList.add('hidden');
+            document.getElementById('slide-prompt-text').classList.remove('hidden');
+            document.getElementById('slide-question-mark').classList.remove('hidden');
         }
 
         function toggleSlideAnswer() {
             playSFX('click');
-            const ansBox = document.getElementById('slide-answer-container');
-            const promptBox = document.getElementById('slide-prompt-text');
-
             state.vocabSlideAnswerRevealed = !state.vocabSlideAnswerRevealed;
             if (state.vocabSlideAnswerRevealed) {
-                ansBox.classList.remove('hidden');
-                promptBox.classList.add('hidden');
+                document.getElementById('slide-answer-container').classList.remove('hidden');
+                document.getElementById('slide-prompt-text').classList.add('hidden');
+                document.getElementById('slide-question-mark').classList.add('hidden');
             } else {
-                ansBox.classList.add('hidden');
-                promptBox.classList.remove('hidden');
+                document.getElementById('slide-answer-container').classList.add('hidden');
+                document.getElementById('slide-prompt-text').classList.remove('hidden');
+                document.getElementById('slide-question-mark').classList.remove('hidden');
             }
         }
 
-        function navSlide(direction) {
+        function navSlide(dir) {
             playSFX('click');
-            state.vocabSlideIndex += direction;
+            state.vocabSlideAnswerRevealed = false;
+            state.vocabSlideIndex += dir;
             if (state.vocabSlideIndex < 0) state.vocabSlideIndex = puzzles.length - 1;
             if (state.vocabSlideIndex >= puzzles.length) state.vocabSlideIndex = 0;
             renderVocabSlide();
@@ -2043,47 +2112,87 @@
 
         function randomSlide() {
             playSFX('click');
+            state.vocabSlideAnswerRevealed = false;
             state.vocabSlideIndex = Math.floor(Math.random() * puzzles.length);
             renderVocabSlide();
         }
 
-        function populateVocabCategoryFilter() {
-            const select = document.getElementById('vocab-category-filter');
-            if (select.children.length > 1) return;
-
-            const categories = new Set(puzzles.map(p => p.category));
-            categories.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat;
-                opt.textContent = cat;
-                select.appendChild(opt);
-            });
+        function setVocabViewMode(mode) {
+            playSFX('click');
+            state.vocabMode = mode;
+            document.getElementById('vocab-mode-slide').classList.remove('bg-yellow-400', 'bg-slate-100');
+            document.getElementById('vocab-mode-grid').classList.remove('bg-yellow-400', 'bg-slate-100');
+            
+            if (mode === 'slide') {
+                document.getElementById('vocab-slide-view').classList.remove('hidden');
+                document.getElementById('vocab-grid-view').classList.add('hidden');
+                document.getElementById('vocab-mode-slide').classList.add('bg-yellow-400');
+                document.getElementById('vocab-mode-grid').classList.add('bg-slate-100');
+            } else {
+                document.getElementById('vocab-slide-view').classList.add('hidden');
+                document.getElementById('vocab-grid-view').classList.remove('hidden');
+                document.getElementById('vocab-grid-view').classList.add('flex');
+                document.getElementById('vocab-mode-grid').classList.add('bg-yellow-400');
+                document.getElementById('vocab-mode-slide').classList.add('bg-slate-100');
+                renderVocabGrid();
+            }
         }
 
         function renderVocabGrid() {
-            const search = document.getElementById('vocab-search').value.toUpperCase().trim();
-            const catFilter = document.getElementById('vocab-category-filter').value;
             const container = document.getElementById('vocab-grid-container');
+            const search = document.getElementById('vocab-search').value.toLowerCase();
+            const filter = document.getElementById('vocab-category-filter').value;
+            
             container.innerHTML = '';
+            
+            const categories = new Set();
+            puzzles.forEach(p => categories.add(p.category));
+            
+            const filterSelect = document.getElementById('vocab-category-filter');
+            if (filterSelect.options.length === 1) {
+                Array.from(categories).sort().forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    filterSelect.appendChild(opt);
+                });
+            }
 
-            puzzles.forEach((item, index) => {
-                if (catFilter !== 'ALL' && item.category !== catFilter) return;
-                if (search && !item.answer.includes(search) && !item.category.toUpperCase().includes(search)) return;
+            puzzles.forEach(puzzle => {
+                if (filter !== 'ALL' && puzzle.category !== filter) return;
+                if (search && !puzzle.answer.toLowerCase().includes(search) && !puzzle.category.toLowerCase().includes(search)) return;
 
                 const card = document.createElement('div');
-                card.className = "solid-card p-2.5 sm:p-3 text-center flex flex-col items-center justify-between gap-1 hover:bg-yellow-50 cursor-pointer transition-all";
-                card.onclick = () => {
-                    state.vocabSlideIndex = index;
-                    setVocabViewMode('slide');
-                };
-
+                card.className = 'bg-white p-3 rounded-xl border-2 border-slate-900 text-center flex flex-col items-center justify-center gap-1 hover:bg-yellow-50 transition-colors shadow-sm';
                 card.innerHTML = `
-                    <div class="text-[10px] font-black text-slate-500 uppercase">${item.category}</div>
-                    <div class="text-2xl sm:text-3xl my-1">${item.part1} + ${item.part2}</div>
-                    <div class="text-xs sm:text-sm font-black text-blue-900 uppercase tracking-wide">${item.answer}</div>
+                    <div class="text-xs font-bold text-slate-500 uppercase">${puzzle.category}</div>
+                    <div class="text-2xl sm:text-3xl my-1">${puzzle.part1} + ${puzzle.part2}</div>
+                    <div class="text-sm sm:text-base font-black text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${puzzle.answer}</div>
                 `;
                 container.appendChild(card);
             });
+        }
+
+        function toggleMobileOptions(forceState) {
+            const options = document.getElementById('optional-controls');
+            const button = document.getElementById('mobile-more-btn');
+            const shouldOpen = forceState === true || (forceState !== false && !options.classList.contains('is-open'));
+
+            options.classList.toggle('is-open', shouldOpen);
+            button.setAttribute('aria-expanded', String(shouldOpen));
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            const btn = document.getElementById('sound-toggle');
+            if (state.soundEnabled) {
+                btn.textContent = '🔊';
+                btn.classList.replace('bg-slate-600', 'bg-blue-600');
+                playSFX('click');
+            } else {
+                btn.textContent = '🔇';
+                btn.classList.replace('bg-blue-600', 'bg-slate-600');
+            }
         }
 
         function reshuffleAllPuzzles() {
@@ -2093,29 +2202,10 @@
             loadCurrentPuzzle();
         }
 
-        function toggleSound() {
-            state.soundEnabled = !state.soundEnabled;
-            document.getElementById('sound-toggle').textContent = state.soundEnabled ? '🔊' : '🔇';
-        }
-
-        function toggleMobileMenu(forceState) {
-            const drawer = document.getElementById('header-drawer');
-            const backdrop = document.getElementById('mobile-menu-backdrop');
-            const shouldShow = forceState !== undefined ? forceState : drawer.classList.contains('translate-x-full');
-
-            if (shouldShow) {
-                drawer.classList.remove('translate-x-full');
-                backdrop.classList.remove('hidden');
-            } else {
-                drawer.classList.add('translate-x-full');
-                backdrop.classList.add('hidden');
-            }
-        }
-
-        window.onload = function() {
-            resetQuestionPool();
-            pickNextPuzzle();
-        };
+        // Keep the label future-proof: the puzzle pool can grow without editing UI text.
+        document.getElementById('intro-puzzle-count-badge').textContent = 'WORD PUZZLES';
+        resetQuestionPool();
+        pickNextPuzzle();
     </script>
 </body>
 </html>
