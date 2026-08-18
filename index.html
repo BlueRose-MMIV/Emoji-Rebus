@@ -335,7 +335,7 @@
     </div>
 
     <!-- Header & Action Toolbar -->
-    <header class="w-full bg-slate-900 text-white px-3 sm:px-4 py-2 border-b-4 border-slate-900 z-50 shadow-md shrink-0">
+    <header class="w-full bg-slate-900 text-white px-3 sm:px-4 py-2 border-b-4 border-slate-900 z-50 shadow-md shrink-0 relative">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
             
             <!-- Logo / Brand -->
@@ -346,54 +346,80 @@
                 </div>
             </div>
 
-            <!-- View Navigation Tabs -->
-            <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border-2 border-slate-700">
-                <button id="tab-hangman" onclick="requestTabSwitch('hangman')" class="solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1">
-                    🎮 <span>Hangman</span>
-                </button>
-                <button id="tab-play" onclick="requestTabSwitch('play')" class="solid-btn bg-slate-100 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1">
-                    🎯 <span>Quiz</span>
-                </button>
-                <button id="tab-vocab" onclick="requestTabSwitch('vocab')" class="solid-btn bg-slate-100 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1">
-                    📚 <span>Vocabulary</span>
-                </button>
-            </div>
+            <!-- ============================================================ -->
+            <!-- DRAWER WRAPPER: on mobile/tablet (< lg) this becomes a fixed  -->
+            <!-- slide-out panel triggered by the hamburger button. On large  -->
+            <!-- screens (lg+) it collapses via "display:contents" so its two -->
+            <!-- children render exactly inline in the header row, identical  -->
+            <!-- to the original desktop design.                              -->
+            <!-- ============================================================ -->
+            <div id="header-drawer" class="fixed inset-y-0 right-0 z-[60] w-[86vw] max-w-xs bg-slate-900 border-l-4 border-slate-700 shadow-2xl p-4 flex flex-col gap-4 overflow-y-auto translate-x-full transition-transform duration-300 ease-out lg:contents">
 
-            <!-- Single Player / Multiplayer Toggle + Timer Options + Controls -->
-            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                
-                <!-- Player Mode Toggle Button -->
-                <button id="mode-toggle-btn" onclick="requestPlayerModeToggle()" class="solid-btn bg-yellow-400 text-slate-900 px-2.5 sm:px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Toggle Single Player / Team Mode">
-                    <span id="mode-toggle-icon">👤</span> <span id="mode-toggle-label">Solo Mode</span>
-                </button>
-
-                <!-- Configurable Question Timer (15s, 30s, 45s, 60s) -->
-                <div class="flex items-center gap-1 bg-slate-800 text-yellow-400 px-2 sm:px-3 py-1 rounded-xl border-2 border-slate-700 text-xs font-mono font-black">
-                    <span class="text-sm">⏱️</span>
-                    <span id="timer-display" class="text-sm sm:text-base font-bold min-w-[3.5ch] text-yellow-300">00:30</span>
-                    
-                    <!-- Time Selector Buttons -->
-                    <div class="flex gap-1 ml-1">
-                        <button id="time-opt-15" onclick="setBaseTimerDuration(15)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="15 Seconds">15s</button>
-                        <button id="time-opt-30" onclick="setBaseTimerDuration(30)" class="solid-btn bg-yellow-400 text-slate-900 px-1.5 py-0.5 text-[10px]" title="30 Seconds (Default)">30s</button>
-                        <button id="time-opt-45" onclick="setBaseTimerDuration(45)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="45 Seconds">45s</button>
-                        <button id="time-opt-60" onclick="setBaseTimerDuration(60)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="1 Minute / 60 Seconds">60s</button>
-                        <button onclick="restartCurrentQuestionTimer()" class="solid-btn bg-slate-200 text-slate-900 px-1.5 py-0.5 text-[10px]" title="Restart Timer">↺</button>
-                    </div>
+                <!-- Mobile-only Drawer Header -->
+                <div class="flex items-center justify-between lg:hidden shrink-0">
+                    <span class="text-yellow-400 font-black font-display text-sm uppercase tracking-wide">Menu</span>
+                    <button onclick="toggleMobileMenu(false)" class="solid-btn bg-slate-700 text-white px-2.5 py-1 text-sm" title="Close Menu">✕</button>
                 </div>
 
-                <!-- Shuffle & Sound Buttons -->
-                <button onclick="reshuffleAllPuzzles()" class="solid-btn bg-emerald-400 text-slate-900 px-2 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Shuffle Questions">
-                    🔀 <span class="hidden md:inline">Shuffle</span>
-                </button>
-                <button id="sound-toggle" onclick="toggleSound()" class="solid-btn bg-blue-600 text-white px-2.5 py-1.5 text-sm" title="Toggle Sound">
-                    🔊
-                </button>
+                <!-- View Navigation Tabs -->
+                <div class="flex items-center gap-1 flex-wrap bg-slate-800 p-1 rounded-xl border-2 border-slate-700">
+                    <button id="tab-hangman" onclick="requestTabSwitch('hangman')" class="solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1">
+                        🎮 <span>Hangman</span>
+                    </button>
+                    <button id="tab-play" onclick="requestTabSwitch('play')" class="solid-btn bg-slate-100 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1">
+                        🎯 <span>Quiz</span>
+                    </button>
+                    <button id="tab-vocab" onclick="requestTabSwitch('vocab')" class="solid-btn bg-slate-100 text-slate-900 px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1">
+                        📚 <span>Vocabulary</span>
+                    </button>
+                </div>
+
+                <!-- Single Player / Multiplayer Toggle + Timer Options + Controls -->
+                <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                    
+                    <!-- Player Mode Toggle Button -->
+                    <button id="mode-toggle-btn" onclick="requestPlayerModeToggle()" class="solid-btn bg-yellow-400 text-slate-900 px-2.5 sm:px-3 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Toggle Single Player / Team Mode">
+                        <span id="mode-toggle-icon">👤</span> <span id="mode-toggle-label">Solo Mode</span>
+                    </button>
+
+                    <!-- Configurable Question Timer (15s, 30s, 45s, 60s) -->
+                    <div class="flex items-center gap-1 bg-slate-800 text-yellow-400 px-2 sm:px-3 py-1 rounded-xl border-2 border-slate-700 text-xs font-mono font-black flex-wrap">
+                        <span class="text-sm">⏱️</span>
+                        <span id="timer-display" class="text-sm sm:text-base font-bold min-w-[3.5ch] text-yellow-300">00:30</span>
+                        
+                        <!-- Time Selector Buttons -->
+                        <div class="flex gap-1 ml-1 flex-wrap">
+                            <button id="time-opt-15" onclick="setBaseTimerDuration(15)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="15 Seconds">15s</button>
+                            <button id="time-opt-30" onclick="setBaseTimerDuration(30)" class="solid-btn bg-yellow-400 text-slate-900 px-1.5 py-0.5 text-[10px]" title="30 Seconds (Default)">30s</button>
+                            <button id="time-opt-45" onclick="setBaseTimerDuration(45)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="45 Seconds">45s</button>
+                            <button id="time-opt-60" onclick="setBaseTimerDuration(60)" class="solid-btn bg-slate-700 text-white hover:bg-yellow-400 hover:text-slate-900 px-1.5 py-0.5 text-[10px]" title="1 Minute / 60 Seconds">60s</button>
+                            <button onclick="restartCurrentQuestionTimer()" class="solid-btn bg-slate-200 text-slate-900 px-1.5 py-0.5 text-[10px]" title="Restart Timer">↺</button>
+                        </div>
+                    </div>
+
+                    <!-- Shuffle & Sound Buttons -->
+                    <button onclick="reshuffleAllPuzzles()" class="solid-btn bg-emerald-400 text-slate-900 px-2 py-1.5 text-xs md:text-sm font-black flex items-center gap-1" title="Shuffle Questions">
+                        🔀 <span class="hidden md:inline">Shuffle</span>
+                    </button>
+                    <button id="sound-toggle" onclick="toggleSound()" class="solid-btn bg-blue-600 text-white px-2.5 py-1.5 text-sm" title="Toggle Sound">
+                        🔊
+                    </button>
+
+                </div>
 
             </div>
+
+            <!-- Hamburger Menu Button (mobile & tablet only) -->
+            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="lg:hidden solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-base font-black" title="Open Menu">
+                ☰
+            </button>
 
         </div>
     </header>
+
+    <!-- Backdrop overlay for mobile/tablet drawer (never shown on lg+) -->
+    <div id="mobile-menu-backdrop" onclick="toggleMobileMenu(false)" class="hidden lg:hidden fixed inset-0 bg-slate-900/60 z-[55]"></div>
+
 
     <!-- Automated Anti-Cheat Team Scoreboard Banner (Only visible in Multiplayer Mode) -->
     <div id="multiplayer-bar" class="hidden bg-yellow-300 border-b-4 border-slate-900 py-1.5 px-4 shadow-inner shrink-0 transition-all">
@@ -1176,6 +1202,40 @@
             document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
         }
 
+        /* ========================================== */
+        /* MOBILE / TABLET HAMBURGER DRAWER MENU       */
+        /* (Desktop/lg+ layout is untouched — the      */
+        /* drawer collapses via CSS "display:contents" */
+        /* on large screens so this code has no effect */
+        /* on the original design there.)              */
+        /* ========================================== */
+        let isMobileMenuOpen = false;
+
+        function toggleMobileMenu(forceState) {
+            const drawer = document.getElementById('header-drawer');
+            const backdrop = document.getElementById('mobile-menu-backdrop');
+            if (!drawer || !backdrop) return;
+
+            isMobileMenuOpen = (typeof forceState === 'boolean') ? forceState : !isMobileMenuOpen;
+
+            if (isMobileMenuOpen) {
+                drawer.classList.remove('translate-x-full');
+                drawer.classList.add('translate-x-0');
+                backdrop.classList.remove('hidden');
+            } else {
+                drawer.classList.add('translate-x-full');
+                drawer.classList.remove('translate-x-0');
+                backdrop.classList.add('hidden');
+            }
+        }
+
+        /* Auto-close the mobile drawer if the window is resized up to desktop size */
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1024 && isMobileMenuOpen) {
+                toggleMobileMenu(false);
+            }
+        });
+
         /* Check if Current Mode has Active Score / Streak */
         function hasCurrentModeActiveScore() {
             if (isMultiplayer) {
@@ -1281,6 +1341,8 @@
                     renderGrid();
                 }
             }
+
+            toggleMobileMenu(false);
         }
 
         /* ========================================== */
