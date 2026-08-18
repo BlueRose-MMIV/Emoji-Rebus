@@ -35,7 +35,12 @@
     <style>
         html, body {
             height: 100%;
-            overflow: hidden;
+            /* Try to fit everything on one screen (no page scroll) by default.
+               If content genuinely doesn't fit (short landscape viewports,
+               tablets, unusual zoom levels), fall back to a normal page
+               scroll instead of clipping/hiding buttons. */
+            overflow-x: hidden;
+            overflow-y: auto;
             background-color: #FEF3C7;
             color: #0F172A;
             font-family: 'Inter', sans-serif;
@@ -335,7 +340,7 @@
     </div>
 
     <!-- Header & Action Toolbar -->
-    <header class="w-full bg-slate-900 text-white px-3 sm:px-4 py-2 border-b-4 border-slate-900 z-50 shadow-md shrink-0 relative">
+    <header class="w-full bg-slate-900 text-white px-3 sm:px-4 py-2 border-b-4 border-slate-900 z-[70] shadow-md shrink-0 relative">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
             
             <!-- Logo / Brand -->
@@ -353,10 +358,10 @@
             <!-- children render exactly inline in the header row, identical  -->
             <!-- to the original desktop design.                              -->
             <!-- ============================================================ -->
-            <div id="header-drawer" class="fixed inset-y-0 right-0 z-[60] w-[86vw] max-w-xs bg-slate-900 border-l-4 border-slate-700 shadow-2xl p-4 flex flex-col gap-4 overflow-y-auto translate-x-full transition-transform duration-300 ease-out lg:contents">
+            <div id="header-drawer" class="fixed inset-y-0 right-0 z-[60] w-[86vw] max-w-xs bg-slate-900 border-l-4 border-slate-700 shadow-2xl p-4 flex flex-col gap-4 overflow-y-auto translate-x-full transition-transform duration-300 ease-out xl:contents">
 
                 <!-- Mobile-only Drawer Header -->
-                <div class="flex items-center justify-between lg:hidden shrink-0">
+                <div class="flex items-center justify-between xl:hidden shrink-0">
                     <span class="text-yellow-400 font-black font-display text-sm uppercase tracking-wide">Menu</span>
                     <button onclick="toggleMobileMenu(false)" class="solid-btn bg-slate-700 text-white px-2.5 py-1 text-sm" title="Close Menu">✕</button>
                 </div>
@@ -410,7 +415,7 @@
             </div>
 
             <!-- Hamburger Menu Button (mobile & tablet only) -->
-            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="lg:hidden solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-base font-black" title="Open Menu">
+            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="xl:hidden solid-btn bg-yellow-400 text-slate-900 px-3 py-1.5 text-base font-black" title="Open Menu">
                 ☰
             </button>
 
@@ -418,7 +423,7 @@
     </header>
 
     <!-- Backdrop overlay for mobile/tablet drawer (never shown on lg+) -->
-    <div id="mobile-menu-backdrop" onclick="toggleMobileMenu(false)" class="hidden lg:hidden fixed inset-0 bg-slate-900/60 z-[55]"></div>
+    <div id="mobile-menu-backdrop" onclick="toggleMobileMenu(false)" class="hidden xl:hidden fixed inset-0 bg-slate-900/60 z-[55]"></div>
 
 
     <!-- Automated Anti-Cheat Team Scoreboard Banner (Only visible in Multiplayer Mode) -->
@@ -459,7 +464,7 @@
     </div>
 
     <!-- Main Content Area: Large, Impactful, Filling Viewport Cleanly (No Scroll) -->
-    <main class="max-w-6xl w-full mx-auto p-2 sm:p-3 flex-1 flex flex-col justify-center items-center overflow-hidden">
+    <main class="max-w-6xl w-full mx-auto p-2 sm:p-3 flex-1 flex flex-col justify-center items-center min-h-0">
 
         <!-- ========================================== -->
         <!-- TAB 0: HANGMAN / SINGLE PLAYER MODE        -->
@@ -467,7 +472,7 @@
         <section id="view-hangman" class="w-full h-full flex flex-col justify-center items-center max-h-full">
             
             <!-- Main Hangman Interactive Card (Fixed proportions so Next button never gets pushed) -->
-            <div id="hangman-card" class="solid-card w-full max-w-5xl p-3 sm:p-4 md:p-5 text-center animate-pop relative flex flex-col justify-between overflow-hidden my-auto h-[92vh] max-h-[720px]">
+            <div id="hangman-card" class="solid-card w-full max-w-5xl p-3 sm:p-4 md:p-5 text-center animate-pop relative flex flex-col justify-between overflow-y-auto overflow-x-hidden my-auto max-h-[92vh] md:max-h-[720px]">
                 
                 <!-- Status Row: Stage #, Character Avatar, HP, Score & Streak -->
                 <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2.5 md:p-3 rounded-2xl border-3 border-slate-900 shadow-inner shrink-0">
@@ -571,7 +576,7 @@
         <!-- ========================================== -->
         <section id="view-play" class="w-full h-full flex flex-col justify-center items-center max-h-full hidden">
             
-            <div id="quiz-card" class="solid-card w-full max-w-4xl p-4 md:p-6 text-center animate-pop relative flex flex-col justify-between my-auto h-[92vh] max-h-[720px] overflow-hidden">
+            <div id="quiz-card" class="solid-card w-full max-w-4xl p-4 md:p-6 text-center animate-pop relative flex flex-col justify-between my-auto max-h-[92vh] md:max-h-[720px] overflow-y-auto overflow-x-hidden">
                 
                 <!-- Header Status Row with Quiz Independent Score -->
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2 font-black text-xs md:text-sm shrink-0">
@@ -606,10 +611,10 @@
                 </div>
 
                 <!-- Form -->
-                <form id="quiz-form" onsubmit="handleQuizSubmit(event)" class="mt-2 flex flex-row justify-center gap-3 max-w-xl mx-auto w-full shrink-0">
+                <form id="quiz-form" onsubmit="handleQuizSubmit(event)" class="mt-2 flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 max-w-xl mx-auto w-full shrink-0">
                     <input type="text" id="quiz-input" autocomplete="off" placeholder="TYPE YOUR ANSWER..." 
-                           class="solid-input text-xl md:text-2xl font-black text-center py-2 px-4 text-slate-900 uppercase bg-white flex-grow">
-                    <button type="submit" class="solid-btn bg-yellow-400 text-slate-900 text-base md:text-xl px-6 py-2 uppercase shrink-0">
+                           class="solid-input text-lg sm:text-xl md:text-2xl font-black text-center py-2 px-4 text-slate-900 uppercase bg-white flex-grow min-w-0 w-full sm:w-auto">
+                    <button type="submit" class="solid-btn bg-yellow-400 text-slate-900 text-base md:text-xl px-6 py-2 uppercase shrink-0 w-full sm:w-auto">
                         SUBMIT 🚀
                     </button>
                 </form>
@@ -650,7 +655,7 @@
         <!-- ========================================== -->
         <!-- TAB 2: VOCABULARY (SLIDE VIEW / SHOW ALL)  -->
         <!-- ========================================== -->
-        <section id="view-vocab" class="w-full h-full flex flex-col max-h-full hidden overflow-hidden">
+        <section id="view-vocab" class="w-full h-full flex flex-col max-h-full hidden overflow-y-auto overflow-x-hidden">
 
             <!-- Vocabulary Display Mode Switcher -->
             <div class="w-full flex items-center justify-center mb-2.5 shrink-0">
@@ -665,7 +670,7 @@
             </div>
 
             <!-- ========== SLIDE SUB-VIEW ========== -->
-            <div id="vocab-slide-view" class="w-full h-full flex flex-col justify-center items-center max-h-full overflow-hidden">
+            <div id="vocab-slide-view" class="w-full h-full flex flex-col justify-center items-center max-h-full overflow-y-auto overflow-x-hidden">
 
                 <div class="w-full max-w-5xl flex justify-between items-center mb-2">
                     <span class="bg-blue-900 text-white font-black px-4 py-1.5 rounded-xl text-sm md:text-base border-2 border-slate-900">
@@ -720,7 +725,7 @@
             </div>
 
             <!-- ========== SHOW-ALL / GRID SUB-VIEW ========== -->
-            <div id="vocab-grid-view" class="w-full h-full flex flex-col max-h-full overflow-hidden hidden">
+            <div id="vocab-grid-view" class="w-full h-full flex flex-col max-h-full overflow-y-auto overflow-x-hidden hidden">
 
                 <!-- Grid Filters & Controls Header -->
                 <div class="solid-card p-3 mb-3 flex flex-wrap items-center justify-between gap-3 bg-white shrink-0">
@@ -1231,7 +1236,7 @@
 
         /* Auto-close the mobile drawer if the window is resized up to desktop size */
         window.addEventListener('resize', () => {
-            if (window.innerWidth >= 1024 && isMobileMenuOpen) {
+            if (window.innerWidth >= 1280 && isMobileMenuOpen) {
                 toggleMobileMenu(false);
             }
         });
